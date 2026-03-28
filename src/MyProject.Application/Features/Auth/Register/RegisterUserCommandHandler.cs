@@ -8,8 +8,7 @@ namespace MyProject.Application.Features.Auth.Register;
 
 internal sealed class RegisterUserCommandHandler(
     IUserRepository userRepository,
-    IPasswordHasher passwordHasher,
-    IUnitOfWork unitOfWork)
+    IPasswordHasher passwordHasher)
     : ICommandHandler<RegisterUserCommand, RegisterUserResponse>
 {
     private static readonly Error UsernameAlreadyTaken =
@@ -34,8 +33,7 @@ internal sealed class RegisterUserCommandHandler(
             request.Phone,
             request.Birthday);
 
-        await userRepository.AddAsync(user, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        userRepository.Add(user);
 
         return new RegisterUserResponse(user.Id, user.Username, user.FirstName, user.LastName);
     }

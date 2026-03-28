@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage;
 using MyProject.Domain.Abstractions;
 using MyProject.Domain.Entities;
 
@@ -11,6 +12,8 @@ public sealed class AppDbContext(
     IUserContext userContext)
     : DbContext(options), IUnitOfWork
 {
+    private IDbContextTransaction? _currentTransaction;
+
     public DbSet<User> Users { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -43,5 +46,28 @@ public sealed class AppDbContext(
         }
 
         return await base.SaveChangesAsync(ct);
+    }
+
+    public async Task BeginTransactionAsync(CancellationToken ct = default)
+    {
+        _currentTransaction ??= await Database.BeginTransactionAsync(ct);
+    }
+
+    public async Task CommitTransactionAsync(CancellationToken ct = default)
+    {
+        if (_currentTransaction is null) return;
+
+        await _currentTransaction.CommitAsync(ct);
+        await _currentTransaction.DisposeAsync();
+        _currentTransaction = null;
+    }
+
+    public async Task RollbackTransactionAsync(CancellationToken ct = default)
+    {
+        if (_currentTransaction is null) return;
+
+        await _currentTransaction.RollbackAsync(ct);
+        await _currentTransaction.DisposeAsync();
+        _currentTransaction = null;
     }
 }

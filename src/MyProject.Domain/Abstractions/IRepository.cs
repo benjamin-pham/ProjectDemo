@@ -7,6 +7,7 @@ public interface IRepository<T, TKey>
     Task<T?> GetByIdAsync(TKey id, CancellationToken ct = default);
     Task<IReadOnlyList<T>> GetAllAsync(CancellationToken ct = default);
     Task AddAsync(T entity, CancellationToken ct = default);
+    void Add(T entity);
     void Update(T entity);
     void Remove(T entity);
 }

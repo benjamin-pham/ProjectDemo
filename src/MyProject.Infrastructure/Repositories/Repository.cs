@@ -24,6 +24,9 @@ public abstract class Repository<T, TKey>(AppDbContext context) : IRepository<T,
 
     public void Remove(T entity) =>
         Context.Set<T>().Remove(entity);
+
+    public void Add(T entity) =>
+        Context.Set<T>().Add(entity);
 }
 
 // Shorthand for the common case — Guid primary key
