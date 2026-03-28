@@ -10,7 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.AddSerilogLogging();
 
 // ── Services ─────────────────────────────────────────────────────────────────
-builder.Services.AddOpenApiServices();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddApiDocsServices();
 builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -20,7 +21,7 @@ builder.Services.AddHealthChecks();
 
 // ── Pipeline ─────────────────────────────────────────────────────────────────
 var app = builder.Build();
-app.MapOpenApiEndpoints();
+app.MapApiDocsEndpoints();
 app.UseExceptionHandler(o => { });
 app.UseCorrelationId();
 app.UseSerilogLogging();

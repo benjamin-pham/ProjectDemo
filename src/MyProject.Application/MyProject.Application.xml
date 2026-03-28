@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MyProject.Application</name>
+    </assembly>
+    <members>
+        <member name="T:MyProject.Application.Features.Auth.Register.RegisterUserCommand">
+            <summary>
+            model đăng ký tài khoản
+            </summary>
+            <param name="FirstName">Tên</param>
+            <param name="LastName">Họ</param>
+            <param name="Username">Tên người dùng</param>
+            <param name="Password">Mật khẩu</param>
+            <param name="Email">Thư điện tử</param>
+            <param name="Phone">Điện thoại</param>
+            <param name="Birthday">Sinh nhật</param>
+        </member>
+        <member name="M:MyProject.Application.Features.Auth.Register.RegisterUserCommand.#ctor(System.String,System.String,System.String,System.String,System.String,System.String,System.Nullable{System.DateOnly})">
+            <summary>
+            model đăng ký tài khoản
+            </summary>
+            <param name="FirstName">Tên</param>
+            <param name="LastName">Họ</param>
+            <param name="Username">Tên người dùng</param>
+            <param name="Password">Mật khẩu</param>
+            <param name="Email">Thư điện tử</param>
+            <param name="Phone">Điện thoại</param>
+            <param name="Birthday">Sinh nhật</param>
+        </member>
+        <member name="P:MyProject.Application.Features.Auth.Register.RegisterUserCommand.FirstName">
+            <summary>Tên</summary>
+        </member>
+        <member name="P:MyProject.Application.Features.Auth.Register.RegisterUserCommand.LastName">
+            <summary>Họ</summary>
+        </member>
+        <member name="P:MyProject.Application.Features.Auth.Register.RegisterUserCommand.Username">
+            <summary>Tên người dùng</summary>
+        </member>
+        <member name="P:MyProject.Application.Features.Auth.Register.RegisterUserCommand.Password">
+            <summary>Mật khẩu</summary>
+        </member>
+        <member name="P:MyProject.Application.Features.Auth.Register.RegisterUserCommand.Email">
+            <summary>Thư điện tử</summary>
+        </member>
+        <member name="P:MyProject.Application.Features.Auth.Register.RegisterUserCommand.Phone">
+            <summary>Điện thoại</summary>
+        </member>
+        <member name="P:MyProject.Application.Features.Auth.Register.RegisterUserCommand.Birthday">
+            <summary>Sinh nhật</summary>
+        </member>
+    </members>
+</doc>
