@@ -6,13 +6,13 @@ All examples use `Product` as the entity. Replace with the actual entity name an
 
 Tests for an entity that inherits `BaseEntity` (Guid key) with properties and domain behavior.
 
-### File: `tests/{ProjectName}.Domain.Tests/Entities/ProductTests.cs`
+### File: `tests/{ProjectName}.Domain.UnitTests/Entities/ProductTests.cs`
 
 ```csharp
 using {ProjectName}.Domain.Entities;
 using {ProjectName}.Domain.Exceptions;
 
-namespace {ProjectName}.Domain.Tests.Entities;
+namespace {ProjectName}.Domain.UnitTests.Entities;
 
 public class ProductTests
 {
@@ -67,13 +67,13 @@ public class ProductTests
 
 When an entity has methods that enforce business rules, test those rules thoroughly.
 
-### File: `tests/{ProjectName}.Domain.Tests/Entities/OrderTests.cs`
+### File: `tests/{ProjectName}.Domain.UnitTests/Entities/OrderTests.cs`
 
 ```csharp
 using {ProjectName}.Domain.Entities;
 using {ProjectName}.Domain.Exceptions;
 
-namespace {ProjectName}.Domain.Tests.Entities;
+namespace {ProjectName}.Domain.UnitTests.Entities;
 
 public class OrderTests
 {
@@ -180,7 +180,7 @@ public class OrderTests
 For entities using `BaseEntity<int>` or `BaseEntity<long>`:
 
 ```csharp
-namespace {ProjectName}.Domain.Tests.Entities;
+namespace {ProjectName}.Domain.UnitTests.Entities;
 
 public class CategoryTests
 {
@@ -214,12 +214,12 @@ public class CategoryTests
 
 ## Domain Exception Tests
 
-### File: `tests/{ProjectName}.Domain.Tests/Exceptions/DomainExceptionTests.cs`
+### File: `tests/{ProjectName}.Domain.UnitTests/Exceptions/DomainExceptionTests.cs`
 
 ```csharp
 using {ProjectName}.Domain.Exceptions;
 
-namespace {ProjectName}.Domain.Tests.Exceptions;
+namespace {ProjectName}.Domain.UnitTests.Exceptions;
 
 public class NotFoundExceptionTests
 {

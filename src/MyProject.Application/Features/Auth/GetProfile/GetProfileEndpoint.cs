@@ -1,8 +1,11 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using MyProject.Application.Features.Auth.GetProfile;
+using Microsoft.AspNetCore.Routing;
+using MyProject.Application.Abstractions.Endpoints;
 
-namespace MyProject.API.Endpoints.Auth;
+namespace MyProject.Application.Features.Auth.GetProfile;
 
 internal sealed class GetProfileEndpoint : IEndpoint
 {
@@ -19,12 +22,12 @@ internal sealed class GetProfileEndpoint : IEndpoint
                 : Results.Problem(
                     title: result.Error.Code,
                     detail: result.Error.Description,
-                    statusCode: StatusCodes.Status404NotFound);
+                    statusCode: StatusCodes.Status400BadRequest);
         })
         .RequireAuthorization()
         .WithName("GetProfile")
         .WithTags("Auth")
         .Produces<UserProfileResponse>()
-        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
 }

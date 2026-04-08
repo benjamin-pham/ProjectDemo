@@ -15,11 +15,14 @@ For basic `GetByIdAsync` / `GetAllAsync` / `AddAsync` on a generic repository, t
 
 ## Repository Test Class Template
 
-```csharp
-namespace {ProjectName}.IntegrationTests.Features.Products;
+**Namespace convention:** `{ProjectName}.Infrastructure.IntegrationTests.{Feature}` — no `.Features.` segment.
 
-public class ProductRepositoryTests(CustomWebApplicationFactory factory)
-    : IntegrationTestBase(factory)
+```csharp
+namespace {ProjectName}.Infrastructure.IntegrationTests.Products;
+
+[Collection(nameof(IntegrationTestCollection))]
+public sealed class ProductRepositoryTests(CustomWebApplicationFactory factory)
+    : BaseIntegrationTest(factory)
 {
     // Resolve repository through the DI container within a scope
     private IProductRepository GetRepository() => GetService<IProductRepository>();
@@ -30,7 +33,7 @@ public class ProductRepositoryTests(CustomWebApplicationFactory factory)
     public async Task GetByIdAsync_WithExistingId_ReturnsProduct()
     {
         // Arrange
-        var product = new Product { Name = "Widget", Price = 9.99m };
+        var product = Product.Create("Widget", 9.99m);
         await SeedAsync(product);
 
         // Act
@@ -59,9 +62,9 @@ public class ProductRepositoryTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         await SeedAsync([
-            new Product { Name = "A", Price = 1m },
-            new Product { Name = "B", Price = 2m },
-            new Product { Name = "C", Price = 3m },
+            Product.Create("A", 1m),
+            Product.Create("B", 2m),
+            Product.Create("C", 3m),
         ]);
 
         // Act
@@ -87,7 +90,7 @@ public class ProductRepositoryTests(CustomWebApplicationFactory factory)
     public async Task GetByNameAsync_WithMatchingName_ReturnsProduct()
     {
         // Arrange
-        await SeedAsync(new Product { Name = "SpecificWidget", Price = 9.99m });
+        await SeedAsync(Product.Create("SpecificWidget", 9.99m));
 
         // Act
         var result = await GetRepository().GetByNameAsync("SpecificWidget", CancellationToken.None);
@@ -113,10 +116,11 @@ public class ProductRepositoryTests(CustomWebApplicationFactory factory)
     public async Task GetAllAsync_ExcludesSoftDeletedEntities()
     {
         // Arrange — seed one active, one soft-deleted
-        await SeedAsync([
-            new Product { Name = "Active", Price = 1m, IsDeleted = false },
-            new Product { Name = "Deleted", Price = 2m, IsDeleted = true },
-        ]);
+        // Seed one active entity and one already soft-deleted in the DB
+    var active  = Product.Create("Active", 1m);
+    var deleted = Product.Create("Deleted", 2m);
+    deleted.Delete(); // call the entity's soft-delete method
+    await SeedAsync([active, deleted]);
 
         // Act
         var result = await GetRepository().GetAllAsync(CancellationToken.None);
@@ -132,10 +136,10 @@ public class ProductRepositoryTests(CustomWebApplicationFactory factory)
     public async Task GetByIdAsync_IncludesCategory()
     {
         // Arrange
-        var category = new Category { Name = "Electronics" };
+        var category = Category.Create("Electronics");
         await SeedAsync(category);
 
-        var product = new Product { Name = "TV", Price = 999m, CategoryId = category.Id };
+        var product = Product.Create("TV", 999m, category.Id);
         await SeedAsync(product);
 
         // Act
@@ -153,7 +157,7 @@ public class ProductRepositoryTests(CustomWebApplicationFactory factory)
     public async Task AddAsync_PersistsEntityToDatabase()
     {
         // Arrange
-        var product = new Product { Name = "New Widget", Price = 14.99m };
+        var product = Product.Create("New Widget", 14.99m);
 
         // Act
         await GetRepository().AddAsync(product, CancellationToken.None);

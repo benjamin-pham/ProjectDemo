@@ -103,7 +103,7 @@ public async Task<Result> Handle(Delete{Entity}Command request, CancellationToke
     if (entity is null)
         return Result.Failure(new Error("{Entity}.NotFound", "{Entity} không tồn tại."));
 
-    entity.SoftDelete();
+    entity.MarkAsDeleted();
     await unitOfWork.SaveChangesAsync(cancellationToken);
 
     return Result.Success();
@@ -218,5 +218,116 @@ internal class {OperationName}CommandValidator : AbstractValidator<{OperationNam
 - Every command property that's required should have at least `NotEmpty()`
 - String properties should have `MaximumLength()` matching the DB column constraint
 - The `ValidationBehavior` pipeline will run validators automatically before the handler
+
+---
+
+## Command Endpoint
+
+Create `src/{ProjectName}.Application/Features/{EntityPlural}/{OperationName}/{OperationName}Endpoint.cs` (co-located with the command):
+
+### POST — Create (returns 201)
+```csharp
+using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using {ProjectName}.Application.Abstractions.Endpoints;
+
+namespace {ProjectName}.Application.Features.{EntityPlural}.{OperationName};
+
+internal sealed class {OperationName}Endpoint : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapPost("/api/{entityPluralKebab}", async (
+            {OperationName}Command command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(command, ct);
+
+            return result.IsSuccess
+                ? Results.Created($"/api/{entityPluralKebab}/{result.Value}", result.Value)
+                : Results.Problem(
+                    title: result.Error.Code,
+                    detail: result.Error.Description,
+                    statusCode: StatusCodes.Status409Conflict,
+                    type: "https://tools.ietf.org/html/rfc9110#section-15.5.10");
+        })
+        .WithName("{OperationName}")
+        .WithTags("{EntityPlural}")
+        .Produces<{ResponseType}>(StatusCodes.Status201Created)
+        .Produces<ProblemDetails>(StatusCodes.Status409Conflict);
+    }
+}
+```
+
+### PUT — Update (returns 204)
+```csharp
+internal sealed class {OperationName}Endpoint : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapPut("/api/{entityPluralKebab}/{id}", async (
+            Guid id,
+            {OperationName}Command command,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(command with { Id = id }, ct);
+
+            return result.IsSuccess
+                ? Results.NoContent()
+                : Results.Problem(
+                    title: result.Error.Code,
+                    detail: result.Error.Description,
+                    statusCode: StatusCodes.Status404NotFound);
+        })
+        .RequireAuthorization()
+        .WithName("{OperationName}")
+        .WithTags("{EntityPlural}")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+    }
+}
+```
+
+### DELETE (returns 204)
+```csharp
+internal sealed class {OperationName}Endpoint : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapDelete("/api/{entityPluralKebab}/{id}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new {OperationName}Command(id), ct);
+
+            return result.IsSuccess
+                ? Results.NoContent()
+                : Results.Problem(
+                    title: result.Error.Code,
+                    detail: result.Error.Description,
+                    statusCode: StatusCodes.Status404NotFound);
+        })
+        .RequireAuthorization()
+        .WithName("{OperationName}")
+        .WithTags("{EntityPlural}")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+    }
+}
+```
+
+**Guidelines:**
+- Class is `internal sealed` — same as handler
+- Route: `/api/{entityPluralKebab}` (kebab-case plural, e.g., `/api/products`, `/api/order-items`)
+- `EndpointExtensions` scans the Application assembly and registers all `IEndpoint` implementations — no manual wiring needed
+- Use `.RequireAuthorization()` for protected endpoints
+- Match `Produces<>()` declarations to actual response types returned
+- For auth-scoped operations (e.g., update own profile), the endpoint does NOT pass `userId` — the handler reads it from `IUserContext`
 
 

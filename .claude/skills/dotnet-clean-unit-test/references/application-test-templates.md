@@ -24,35 +24,37 @@ Write one test per step. Each test only sets up the steps before it as successes
 Each handler gets its own dedicated test file. Never combine tests for multiple handlers in one file.
 
 ```
-src/.../Commands/CreateProductCommandHandler.cs
-  → tests/.../Commands/CreateProductCommandHandlerTests.cs
+src/MyShop.Application/Features/Products/CreateProduct/CreateProductCommandHandler.cs
+  → tests/MyShop.Application.UnitTests/Features/Products/CreateProduct/CreateProductCommandHandlerTests.cs
 
-src/.../Commands/UpdateProductCommandHandler.cs
-  → tests/.../Commands/UpdateProductCommandHandlerTests.cs
+src/MyShop.Application/Features/Products/UpdateProduct/UpdateProductCommandHandler.cs
+  → tests/MyShop.Application.UnitTests/Features/Products/UpdateProduct/UpdateProductCommandHandlerTests.cs
 
-src/.../Queries/GetAllProductsQueryHandler.cs
-  → tests/.../Queries/GetAllProductsQueryHandlerTests.cs
+src/MyShop.Application/Features/Products/GetAllProducts/GetAllProductsQueryHandler.cs
+  → tests/MyShop.Application.UnitTests/Features/Products/GetAllProducts/GetAllProductsQueryHandlerTests.cs
 ```
 
 Full test project layout:
 
 ```
-tests/{ProjectName}.Application.Tests/
+tests/{ProjectName}.Application.UnitTests/
 ├── GlobalUsings.cs
 ├── TestData/                              ← Static factory helpers (one file per entity)
 │   ├── ProductData.cs
 │   └── CategoryData.cs
 └── Features/
     └── Products/
-        ├── Queries/
-        │   ├── GetAllProductsQueryHandlerTests.cs   ← one handler, one file
-        │   └── GetProductByIdQueryHandlerTests.cs   ← one handler, one file
-        ├── Commands/
-        │   ├── CreateProductCommandHandlerTests.cs  ← one handler, one file
-        │   ├── UpdateProductCommandHandlerTests.cs  ← one handler, one file
-        │   └── DeleteProductCommandHandlerTests.cs  ← one handler, one file
-        └── Validators/
-            └── CreateProductCommandValidatorTests.cs
+        ├── GetAllProducts/
+        │   └── GetAllProductsQueryHandlerTests.cs   ← mirrors vertical slice path
+        ├── GetProductById/
+        │   └── GetProductByIdQueryHandlerTests.cs
+        ├── CreateProduct/
+        │   ├── CreateProductCommandHandlerTests.cs
+        │   └── CreateProductCommandValidatorTests.cs
+        ├── UpdateProduct/
+        │   └── UpdateProductCommandHandlerTests.cs
+        └── DeleteProduct/
+            └── DeleteProductCommandHandlerTests.cs
 ```
 
 ---
@@ -61,12 +63,12 @@ tests/{ProjectName}.Application.Tests/
 
 Put static factory methods in a `TestData/` folder — one class per entity. This avoids scattering `new Product { ... }` across every test and makes it easy to create valid objects in one line.
 
-### File: `tests/{ProjectName}.Application.Tests/TestData/ProductData.cs`
+### File: `tests/{ProjectName}.Application.UnitTests/TestData/ProductData.cs`
 
 ```csharp
 using {ProjectName}.Domain.Entities;
 
-namespace {ProjectName}.Application.Tests.TestData;
+namespace {ProjectName}.Application.UnitTests.TestData;
 
 public static class ProductData
 {
@@ -92,7 +94,7 @@ public static class ProductData
 ```csharp
 using {ProjectName}.Domain.Entities;
 
-namespace {ProjectName}.Application.Tests.TestData;
+namespace {ProjectName}.Application.UnitTests.TestData;
 
 public static class CategoryData
 {
@@ -113,16 +115,16 @@ public static class CategoryData
 
 Each test covers exactly one point of failure. Later tests build up successful context for all prior steps before testing their own failure point. This makes each test's intent immediately obvious.
 
-### File: `tests/{ProjectName}.Application.Tests/Features/Products/Commands/CreateProductCommandHandlerTests.cs`
+### File: `tests/{ProjectName}.Application.UnitTests/Features/Products/CreateProduct/CreateProductCommandHandlerTests.cs`
 
 ```csharp
-using {ProjectName}.Application.Features.Products.Commands;
-using {ProjectName}.Application.Tests.TestData;
+using {ProjectName}.Application.Features.Products.CreateProduct;
+using {ProjectName}.Application.UnitTests.TestData;
 using {ProjectName}.Domain.Entities;
-using {ProjectName}.Domain.Exceptions;
-using {ProjectName}.Domain.Interfaces;
+using {ProjectName}.Domain.Abstractions;
+using {ProjectName}.Domain.Repositories;
 
-namespace {ProjectName}.Application.Tests.Features.Products.Commands;
+namespace {ProjectName}.Application.UnitTests.Features.Products.CreateProduct;
 
 public class CreateProductCommandHandlerTests
 {
@@ -144,9 +146,9 @@ public class CreateProductCommandHandlerTests
         _sut = new CreateProductCommandHandler(_productRepository, _categoryRepository);
     }
 
-    // Step 1: Category must exist
+    // Step 1: Category must exist — handler returns Result.Failure if not found
     [Fact]
-    public async Task Handle_WhenCategoryNotFound_ThrowsNotFoundException()
+    public async Task Handle_WhenCategoryNotFound_ReturnsFailure()
     {
         // Arrange
         _categoryRepository
@@ -154,17 +156,18 @@ public class CreateProductCommandHandlerTests
             .Returns((Category?)null);
 
         // Act
-        var act = async () => await _sut.Handle(Command, CancellationToken.None);
+        var result = await _sut.Handle(Command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(CategoryErrors.NotFound);
         await _productRepository.DidNotReceive().AddAsync(
             Arg.Any<Product>(), Arg.Any<CancellationToken>());
     }
 
-    // Step 2 (happy path): Category exists → product is created
+    // Step 2 (happy path): Category exists → product is created, returns success
     [Fact]
-    public async Task Handle_WhenCategoryExists_CreatesProductAndReturnsId()
+    public async Task Handle_WhenCategoryExists_ReturnsSuccessWithId()
     {
         // Arrange
         var category = CategoryData.Create(Command.CategoryId);
@@ -172,20 +175,12 @@ public class CreateProductCommandHandlerTests
             .GetByIdAsync(Command.CategoryId, Arg.Any<CancellationToken>())
             .Returns(category);
 
-        _productRepository
-            .AddAsync(Arg.Any<Product>(), Arg.Any<CancellationToken>())
-            .Returns(callInfo =>
-            {
-                var p = callInfo.Arg<Product>();
-                p.Id = Guid.NewGuid();
-                return p;
-            });
-
         // Act
         var result = await _sut.Handle(Command, CancellationToken.None);
 
         // Assert
-        result.Should().NotBe(Guid.Empty);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBe(Guid.Empty);
     }
 
     // Step 2 (verify interaction): Product saved with correct data
@@ -197,10 +192,6 @@ public class CreateProductCommandHandlerTests
         _categoryRepository
             .GetByIdAsync(Command.CategoryId, Arg.Any<CancellationToken>())
             .Returns(category);
-
-        _productRepository
-            .AddAsync(Arg.Any<Product>(), Arg.Any<CancellationToken>())
-            .Returns(callInfo => callInfo.Arg<Product>());
 
         // Act
         await _sut.Handle(Command, CancellationToken.None);
@@ -422,7 +413,7 @@ public class GetProductByIdQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenProductNotFound_ThrowsNotFoundException()
+    public async Task Handle_WhenProductNotFound_ReturnsFailure()
     {
         // Arrange
         _repository
@@ -430,14 +421,15 @@ public class GetProductByIdQueryHandlerTests
             .Returns((Product?)null);
 
         // Act
-        var act = async () => await _sut.Handle(Query, CancellationToken.None);
+        var result = await _sut.Handle(Query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().Be(ProductErrors.NotFound);
     }
 
     [Fact]
-    public async Task Handle_WhenProductExists_ReturnsProductResponse()
+    public async Task Handle_WhenProductExists_ReturnsSuccessWithProductResponse()
     {
         // Arrange
         var product = ProductData.Create(id: ProductId, name: "Widget", price: 9.99m);
@@ -449,9 +441,9 @@ public class GetProductByIdQueryHandlerTests
         var result = await _sut.Handle(Query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Id.Should().Be(ProductId);
-        result.Name.Should().Be("Widget");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Id.Should().Be(ProductId);
+        result.Value.Name.Should().Be("Widget");
     }
 }
 ```

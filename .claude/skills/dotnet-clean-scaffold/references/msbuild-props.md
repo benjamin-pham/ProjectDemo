@@ -36,6 +36,7 @@ Enables **Central Package Management** — versions defined once, referenced by 
 
   <ItemGroup Label="Shared">
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
   </ItemGroup>
 
   <ItemGroup Label="Application">
@@ -94,10 +95,16 @@ Key rules:
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <!-- Required for IEndpointRouteBuilder used in IEndpoint (Application.Abstractions.Endpoints) -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MediatR" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
 </Project>

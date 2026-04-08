@@ -10,11 +10,13 @@
 │   ├── {ProjectName}.Infrastructure/
 │   └── {ProjectName}.API/
 ├── tests/
-│   ├── {ProjectName}.Domain.Tests/
-│   └── {ProjectName}.Application.Tests/
+│   ├── {ProjectName}.Domain.UnitTests/
+│   └── {ProjectName}.Application.UnitTests/
 ├── Directory.Build.props
 └── Directory.Packages.props
 ```
+
+No solution file — the project uses `Directory.Build.props` for directory-level build configuration.
 
 ## Step 1 — Add Test Packages to Directory.Packages.props
 
@@ -35,21 +37,21 @@ Check NuGet for latest stable versions if the ones above are outdated.
 
 ## Step 2 — Create Test Projects
 
-### Domain.Tests
+### Domain.UnitTests
 
 ```bash
-dotnet new xunit -n {ProjectName}.Domain.Tests -o tests/{ProjectName}.Domain.Tests
-dotnet sln add tests/{ProjectName}.Domain.Tests
-dotnet add tests/{ProjectName}.Domain.Tests reference src/{ProjectName}.Domain
+dotnet new xunit -n {ProjectName}.Domain.UnitTests -o tests/{ProjectName}.Domain.UnitTests
+dotnet add tests/{ProjectName}.Domain.UnitTests reference src/{ProjectName}.Domain
 ```
 
-### Application.Tests
+### Application.UnitTests
 
 ```bash
-dotnet new xunit -n {ProjectName}.Application.Tests -o tests/{ProjectName}.Application.Tests
-dotnet sln add tests/{ProjectName}.Application.Tests
-dotnet add tests/{ProjectName}.Application.Tests reference src/{ProjectName}.Application
+dotnet new xunit -n {ProjectName}.Application.UnitTests -o tests/{ProjectName}.Application.UnitTests
+dotnet add tests/{ProjectName}.Application.UnitTests reference src/{ProjectName}.Application
 ```
+
+No `dotnet sln add` — the project has no solution file. `Directory.Build.props` at the root handles build configuration for all projects.
 
 If Application references Domain (which it should in Clean Architecture), Application.Tests can also access Domain types through the transitive reference.
 
@@ -57,7 +59,7 @@ If Application references Domain (which it should in Clean Architecture), Applic
 
 After creating via `dotnet new xunit`, the .csproj files will have explicit versions. Update them to use Central Package Management (no `Version` attribute) and remove properties already in `Directory.Build.props`.
 
-### {ProjectName}.Domain.Tests.csproj
+### {ProjectName}.Domain.UnitTests.csproj
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -77,6 +79,7 @@ After creating via `dotnet new xunit`, the .csproj files will have explicit vers
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\{ProjectName}.Domain\{ProjectName}.Domain.csproj" />
+
   </ItemGroup>
 
 </Project>
@@ -84,7 +87,7 @@ After creating via `dotnet new xunit`, the .csproj files will have explicit vers
 
 Domain.Tests does NOT need NSubstitute — domain entities are tested directly without mocking.
 
-### {ProjectName}.Application.Tests.csproj
+### {ProjectName}.Application.UnitTests.csproj
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
@@ -119,23 +122,23 @@ Application.Tests includes NSubstitute for mocking repository interfaces and oth
 1. **Delete `UnitTest1.cs`** — we'll create proper test classes
 2. **Update `GlobalUsings.cs`** with project-wide usings:
 
-### Domain.Tests/GlobalUsings.cs
+### Domain.UnitTests/GlobalUsings.cs
 
 ```csharp
 global using Xunit;
 global using FluentAssertions;
 global using {ProjectName}.Domain.Entities;
-global using {ProjectName}.Domain.Exceptions;
+global using {ProjectName}.Domain.Abstractions;
 ```
 
-### Application.Tests/GlobalUsings.cs
+### Application.UnitTests/GlobalUsings.cs
 
 ```csharp
 global using Xunit;
 global using FluentAssertions;
 global using NSubstitute;
 global using {ProjectName}.Domain.Entities;
-global using {ProjectName}.Domain.Interfaces;
+global using {ProjectName}.Domain.Abstractions;
 ```
 
 ## Step 5 — Verify Setup

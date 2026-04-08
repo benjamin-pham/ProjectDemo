@@ -40,20 +40,20 @@ internal sealed class GlobalExceptionHandler(
         {
             ValidationException validationException => new ExceptionDetails(
                 Status: StatusCodes.Status400BadRequest,
-                Type: "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+                Type: "ValidationError",
                 Title: "Validation Error",
                 Detail: "One or more validation errors has occurred",
                 Errors: validationException.Errors),
             UnauthorizedAccessException unauthorizedAccessException => new ExceptionDetails(
                 Status: StatusCodes.Status401Unauthorized,
-                Type: "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+                Type: "Unauthorized",
                 Title: "Unauthorized",
                 Detail: unauthorizedAccessException.Message,
                 Errors: null),
             _ => new ExceptionDetails(
                 Status: StatusCodes.Status500InternalServerError,
                 Type: "ServerError",
-                Title: "Server error",
+                Title: "Server Error",
                 Detail: "An unexpected error has occurred",
                 Errors: null)
         };

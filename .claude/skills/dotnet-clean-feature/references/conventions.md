@@ -9,7 +9,7 @@
 | Validators | `internal class` (not sealed) |
 | Commands & Queries | `public sealed record` |
 | Response DTOs | `public sealed record` with positional parameters |
-| Constructor DI in Handlers | Explicit constructor + `private readonly` fields |
+| Constructor DI in Handlers | Primary constructor (C# 12) — no `private readonly` fields |
 | String defaults | `string.Empty` (not `""`) |
 | Null checks | Pattern matching (`entity is null`, `entity is not null`) |
 | Collections | `IReadOnlyList<T>` for return types |

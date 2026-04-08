@@ -1,117 +1,133 @@
-# WebApplicationFactory, IntegrationTestBase, and JWT Helper
+# WebApplicationFactory, BaseIntegrationTest, and JWT Helper
+
+All files go under `tests/{ProjectName}.API.IntegrationTests/Infrastructure/`.
 
 ## CustomWebApplicationFactory.cs
-
-Place in `tests/{ProjectName}.IntegrationTests/`:
 
 ```csharp
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
+using Respawn;
 using Testcontainers.PostgreSql;
 using {ProjectName}.Infrastructure.Data;
 
-namespace {ProjectName}.IntegrationTests;
+namespace {ProjectName}.API.IntegrationTests.Infrastructure;
 
-public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    // Hardcoded test secrets — match the values injected via AddInMemoryCollection below
+    private const string TestJwtSecretKey = "integration-test-secret-key-32-chars-min!!";
+    private const string TestJwtIssuer    = "{ProjectName}.Test";
+    private const string TestJwtAudience  = "{ProjectName}.Test";
+
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
-        .WithDatabase("testdb")
-        .WithUsername("testuser")
-        .WithPassword("testpass")
+        .WithImage("postgres:17-alpine")
         .Build();
 
+    private Respawner       _respawner    = null!;
+    private NpgsqlConnection _dbConnection = null!;
+
     public string ConnectionString => _dbContainer.GetConnectionString();
-
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.ConfigureTestServices(services =>
-        {
-            // Remove existing DbContext registration
-            var dbContextDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (dbContextDescriptor != null)
-                services.Remove(dbContextDescriptor);
-
-            // Register test database connection
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(ConnectionString));
-        });
-    }
 
     public async Task InitializeAsync()
     {
         await _dbContainer.StartAsync();
 
-        // Apply all EF Core migrations to create the schema
+        // Apply EF Core migrations against the Testcontainers PostgreSQL instance
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await db.Database.MigrateAsync();
+
+        // Open a persistent connection used exclusively by Respawn
+        _dbConnection = new NpgsqlConnection(ConnectionString);
+        await _dbConnection.OpenAsync();
+
+        _respawner = await Respawner.CreateAsync(
+            _dbConnection,
+            new RespawnerOptions
+            {
+                DbAdapter        = DbAdapter.Postgres,
+                SchemasToInclude = ["public"]
+            });
     }
 
-    public new async Task DisposeAsync()
+    /// <summary>Called by BaseIntegrationTest.InitializeAsync() before each test.</summary>
+    public async Task ResetDatabaseAsync() =>
+        await _respawner.ResetAsync(_dbConnection);
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Inject test configuration values — overrides appsettings.json
+        builder.ConfigureAppConfiguration((_, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:Database"]                       = ConnectionString,
+                ["Authentication:Jwt:SecretKey"]                    = TestJwtSecretKey,
+                ["Authentication:Jwt:Issuer"]                       = TestJwtIssuer,
+                ["Authentication:Jwt:Audience"]                     = TestJwtAudience,
+                ["Authentication:Jwt:AccessTokenExpirationMinutes"] = "1440",
+                ["Authentication:Jwt:RefreshTokenExpirationDays"]   = "7",
+            });
+        });
+
+        builder.ConfigureTestServices(services =>
+        {
+            // Replace the production DbContext options with the test container connection
+            var descriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+            if (descriptor is not null)
+                services.Remove(descriptor);
+
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(ConnectionString));
+        });
+    }
+
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        await _dbConnection.DisposeAsync();
         await _dbContainer.DisposeAsync();
     }
 }
 ```
 
-**SQL Server variant:** Replace `Testcontainers.PostgreSql` with `Testcontainers.MsSql`, `PostgreSqlContainer` with `MsSqlContainer`, `PostgreSqlBuilder` with `MsSqlBuilder`, and `UseNpgsql` with `UseSqlServer`.
+**SQL Server variant:** Replace `Testcontainers.PostgreSql` / `PostgreSqlContainer` / `PostgreSqlBuilder` / `UseNpgsql` / `NpgsqlConnection` / `DbAdapter.Postgres` with the SQL Server equivalents.
+
+**Config key names:** The `Authentication:Jwt:*` keys must match whatever the real app reads in `Program.cs`. Adjust them to match the actual appsettings structure.
 
 ---
 
-## IntegrationTestBase.cs
-
-Place in `tests/{ProjectName}.IntegrationTests/`:
+## BaseIntegrationTest.cs
 
 ```csharp
-using Npgsql;
-using Respawn;
-using {ProjectName}.Infrastructure.Data;
+namespace {ProjectName}.API.IntegrationTests.Infrastructure;
 
-namespace {ProjectName}.IntegrationTests;
-
-public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+[Collection(nameof(IntegrationTestCollection))]
+public abstract class BaseIntegrationTest : IAsyncLifetime
 {
     protected readonly HttpClient Client;
     protected readonly CustomWebApplicationFactory Factory;
-    private Respawner _respawner = default!;
 
-    protected IntegrationTestBase(CustomWebApplicationFactory factory)
+    protected BaseIntegrationTest(CustomWebApplicationFactory factory)
     {
         Factory = factory;
-        Client = factory.CreateClient(new() { AllowAutoRedirect = false });
+        Client  = factory.CreateClient();
     }
 
-    public async Task InitializeAsync()
-    {
-        // Reset DB state before each test via Respawn
-        await using var connection = new NpgsqlConnection(Factory.ConnectionString);
-        await connection.OpenAsync();
+    /// <summary>Resets DB state via Respawn before each test.</summary>
+    public Task InitializeAsync() => Factory.ResetDatabaseAsync();
 
-        _respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
-        {
-            DbAdapter = DbAdapter.Postgres,
-            SchemasToInclude = ["public"],
-            // Exclude migration history table from reset
-            TablesToIgnore = ["__EFMigrationsHistory"]
-        });
-
-        await _respawner.ResetAsync(connection);
-    }
-
-    public Task DisposeAsync()
-    {
-        Client.Dispose();
-        return Task.CompletedTask;
-    }
+    public Task DisposeAsync() => Task.CompletedTask;
 
     // ── Seed helpers ──────────────────────────────────────────────────────────
 
-    /// <summary>Seeds a single entity. The entity's Id will be set after this call.</summary>
+    /// <summary>Seeds a single entity. Entity.Id is available immediately after this call.</summary>
     protected async Task SeedAsync<T>(T entity) where T : class
     {
         using var scope = Factory.Services.CreateScope();
@@ -131,7 +147,7 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
 
     // ── DB query helper ───────────────────────────────────────────────────────
 
-    /// <summary>Queries the DB directly — useful for verifying persistence after a POST/PUT/DELETE.</summary>
+    /// <summary>Queries the DB directly — verify persistence after POST/PUT/DELETE.</summary>
     protected async Task<T> GetFromDbAsync<T>(Func<AppDbContext, Task<T>> query)
     {
         using var scope = Factory.Services.CreateScope();
@@ -139,95 +155,98 @@ public abstract class IntegrationTestBase : IClassFixture<CustomWebApplicationFa
         return await query(db);
     }
 
-    // ── Authentication ────────────────────────────────────────────────────────
+    // ── Service resolution ────────────────────────────────────────────────────
 
-    /// <summary>Attaches a valid JWT to all subsequent requests from this test.</summary>
-    protected void AuthenticateAs(string userId, string role = "User")
-    {
-        using var scope = Factory.Services.CreateScope();
-        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-        var token = JwtTokenHelper.GenerateToken(userId, role, config);
-        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-    }
-
-    /// <summary>Removes the JWT header — useful when testing unauthenticated access mid-test.</summary>
-    protected void Unauthenticate()
-    {
-        Client.DefaultRequestHeaders.Authorization = null;
-    }
-
-    // ── Repository helper ─────────────────────────────────────────────────────
-
-    /// <summary>Resolves a service from the DI container — useful for repository tests.</summary>
-    protected T GetService<T>() where T : notnull
-    {
-        return Factory.Services.CreateScope().ServiceProvider.GetRequiredService<T>();
-    }
+    /// <summary>Resolves a service from DI — useful for repository tests in API.IntegrationTests.</summary>
+    protected T GetService<T>() where T : notnull =>
+        Factory.Services.CreateScope().ServiceProvider.GetRequiredService<T>();
 }
+
+[CollectionDefinition(nameof(IntegrationTestCollection))]
+public sealed class IntegrationTestCollection : ICollectionFixture<CustomWebApplicationFactory>;
 ```
+
+**Key design decisions:**
+- `ICollectionFixture` (not `IClassFixture`) — one Docker container shared across ALL test classes in the project. Faster than per-class containers.
+- Respawn resets data before each test via `InitializeAsync()` — tests are fully isolated without recreating the schema.
+- `SeedAsync` uses Rich Domain Model: pass entities created via `Entity.Create(...)`, not raw object initializers.
 
 ---
 
-## Helpers/JwtTokenHelper.cs
-
-Place in `tests/{ProjectName}.IntegrationTests/Helpers/`:
+## Infrastructure/JwtTokenHelper.cs
 
 ```csharp
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace {ProjectName}.IntegrationTests.Helpers;
+namespace {ProjectName}.API.IntegrationTests.Infrastructure;
 
 public static class JwtTokenHelper
 {
-    public static string GenerateToken(string userId, string role, IConfiguration config)
+    // Must match the constants in CustomWebApplicationFactory
+    private const string SecretKey = "integration-test-secret-key-32-chars-min!!";
+    private const string Issuer    = "{ProjectName}.Test";
+    private const string Audience  = "{ProjectName}.Test";
+
+    public static string GenerateToken(Guid userId, int expirationMinutes = 1440)
     {
-        var jwtSettings = config.GetSection("JwtSettings");
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]!));
+        var key         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim(ClaimTypes.Role, role),
-            new Claim(JwtRegisteredClaimNames.Sub, userId),
+            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(JwtRegisteredClaimNames.Iat,
+                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+                ClaimValueTypes.Integer64)
         };
 
         var token = new JwtSecurityToken(
-            issuer: jwtSettings["Issuer"],
-            audience: jwtSettings["Audience"],
-            claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
-            signingCredentials: credentials
-        );
+            issuer:             Issuer,
+            audience:           Audience,
+            claims:             claims,
+            expires:            DateTime.UtcNow.AddMinutes(expirationMinutes),
+            signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    /// <summary>Returns "Bearer {token}" — assign directly to Authorization header.</summary>
+    public static string BearerToken(Guid userId) =>
+        $"Bearer {GenerateToken(userId)}";
 }
 ```
 
-This generates tokens signed with the **same key** as the running application reads from `appsettings.json` (or `appsettings.Testing.json`). Because `WebApplicationFactory` runs the real app configuration pipeline, the keys will always match.
+**Why hardcoded constants:** The factory injects these same values via `AddInMemoryCollection`, bypassing `appsettings.json`. Because both sides use the same constants, tokens always verify correctly without needing to read `IConfiguration`.
+
+**Usage in tests:**
+```csharp
+Client.DefaultRequestHeaders.Authorization =
+    new AuthenticationHeaderValue("Bearer", JwtTokenHelper.GenerateToken(Guid.NewGuid()));
+
+// or using the helper shorthand:
+Client.DefaultRequestHeaders.Authorization =
+    AuthenticationHeaderValue.Parse(JwtTokenHelper.BearerToken(Guid.NewGuid()));
+```
 
 ---
 
-## How These Three Pieces Fit Together
+## How These Pieces Fit Together
 
 ```
 xUnit test runner
-  └── Instantiates CustomWebApplicationFactory once per test class
+  └── Instantiates CustomWebApplicationFactory once per test collection
         └── Starts PostgreSQL container
-        └── Runs EF Core migrations
+        └── Applies EF Core migrations
+        └── Opens persistent NpgsqlConnection for Respawn
         └── For each test:
-              └── IntegrationTestBase.InitializeAsync() → Respawn resets DB
+              └── BaseIntegrationTest.InitializeAsync() → Respawn resets DB
               └── Test runs → uses Client (HTTP) or GetService<T> (DI)
-              └── IntegrationTestBase.DisposeAsync() → disposes HttpClient
-  └── CustomWebApplicationFactory.DisposeAsync() → stops container
+              └── BaseIntegrationTest.DisposeAsync() → no-op (Client is reused)
+  └── CustomWebApplicationFactory.DisposeAsync() → closes connection, stops container
 ```
 
-`IClassFixture<CustomWebApplicationFactory>` means xUnit shares **one** factory (and one Docker container) across all test methods in a class. This keeps test runs fast — container startup happens once.
-
-Respawn runs before each test, wiping all data from `public` schema tables. This isolates tests from each other without the overhead of recreating the database schema each time.
+`ICollectionFixture<CustomWebApplicationFactory>` means xUnit shares **one** factory (and one Docker container) across **all** test classes in the collection. This keeps runs fast — container startup happens once per `dotnet test` invocation.

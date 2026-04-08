@@ -2,10 +2,14 @@
 
 ## IEndpoint Interface
 
-`src/{ProjectName}.API/Endpoints/IEndpoint.cs`
+`src/{ProjectName}.Application/Abstractions/Endpoints/IEndpoint.cs`
+
+> Lives in the **Application layer** so endpoint classes co-located with Commands/Queries can reference it without a circular dependency.
 
 ```csharp
-namespace {ProjectName}.API.Endpoints;
+using Microsoft.AspNetCore.Routing;
+
+namespace {ProjectName}.Application.Abstractions.Endpoints;
 
 public interface IEndpoint
 {
@@ -13,62 +17,70 @@ public interface IEndpoint
 }
 ```
 
-## EndpointExtensions — Auto-Registration
+## EndpointExtensions — DI-based Registration
 
 `src/{ProjectName}.API/Endpoints/EndpointExtensions.cs`
 
 ```csharp
 using System.Reflection;
+using {ProjectName}.Application.Abstractions.Endpoints;
 
 namespace {ProjectName}.API.Endpoints;
 
 public static class EndpointExtensions
 {
-    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder app)
+    public static IServiceCollection AddEndpoints(
+        this IServiceCollection services,
+        Assembly assembly)
     {
-        var endpointTypes = Assembly.GetExecutingAssembly()
+        var endpointTypes = assembly
             .GetTypes()
             .Where(t => t is { IsAbstract: false, IsInterface: false }
-                        && typeof(IEndpoint).IsAssignableFrom(t));
+                        && t.IsAssignableTo(typeof(IEndpoint)));
 
         foreach (var type in endpointTypes)
-        {
-            var endpoint = (IEndpoint)Activator.CreateInstance(type)!;
-            endpoint.MapEndpoint(app);
-        }
+            services.AddTransient(typeof(IEndpoint), type);
+
+        return services;
+    }
+
+    public static IApplicationBuilder MapEndpoints(
+        this WebApplication app,
+        RouteGroupBuilder? routeGroupBuilder = null)
+    {
+        var endpoints = app.Services.GetRequiredService<IEnumerable<IEndpoint>>();
+
+        IEndpointRouteBuilder builder = routeGroupBuilder is null ? app : routeGroupBuilder;
+
+        foreach (var endpoint in endpoints)
+            endpoint.MapEndpoint(builder);
 
         return app;
     }
 }
 ```
 
-This scans the API assembly at startup, finds every concrete class implementing `IEndpoint`, creates an instance, and calls `MapEndpoint`. No manual registration needed — just create a new class and it's automatically discovered.
+**How it works:**
+- `AddEndpoints(assembly)` scans the given assembly, finds every concrete `IEndpoint`, and registers each as `IEnumerable<IEndpoint>` in DI.
+- `MapEndpoints()` resolves the collection from DI and calls `MapEndpoint` on each — no manual wiring needed.
+- Pass `typeof(IEndpoint).Assembly` to scan the **Application** assembly, where endpoint classes live.
 
 ## Program.cs Update
 
-Replace the manual endpoint registration block:
-
-```csharp
-// BEFORE (old pattern — remove these lines):
-// app.MapProductEndpoints();
-// app.MapCategoryEndpoints();
-
-// AFTER (new pattern — single line):
-app.MapEndpoints();
-```
-
-Add the using directive at the top of `Program.cs`:
-
 ```csharp
 using {ProjectName}.API.Endpoints;
-```
+using {ProjectName}.Application.Abstractions.Endpoints;
 
-The full `Program.cs` endpoint section becomes:
+// ── Services ──────────────────────────────────────────────────────────────────
+builder.Services.AddEndpoints(typeof(IEndpoint).Assembly); // scans Application assembly
+builder.Services.AddApplicationServices();
+// ... other services
 
-```csharp
-// Map endpoints
-
+// ── Pipeline ──────────────────────────────────────────────────────────────────
 app.MapEndpoints();
-
 app.Run();
 ```
+
+Key points:
+- `typeof(IEndpoint).Assembly` resolves to the **Application** assembly — this is where all endpoint classes live.
+- Two-step: register types in DI (`AddEndpoints`) then map routes (`MapEndpoints`).

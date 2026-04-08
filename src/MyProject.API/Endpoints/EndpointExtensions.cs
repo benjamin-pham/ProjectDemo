@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using MyProject.Application.Abstractions.Endpoints;
 
 namespace MyProject.API.Endpoints;
 

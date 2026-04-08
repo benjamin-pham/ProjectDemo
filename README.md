@@ -56,6 +56,7 @@ src/
 │   ├── Abstractions/
 │   │   ├── Data/              ← ISqlConnectionFactory
 │   │   ├── Messaging/         ← ICommand, IQuery, ICommandHandler, IQueryHandler
+│   │   ├── Endpoints/         ← IEndpoint
 │   │   └── {Feature}/         ← feature-specific interfaces (e.g., Authentication/IJwtTokenService)
 │   ├── Behaviors/             ← ValidationBehavior
 │   ├── Exceptions/            ← ValidationException, ValidationError
@@ -66,6 +67,7 @@ src/
 │       └── {EntityPlural}/        ← Feature folder per aggregatee.g., Users/, Orders/, Products/
 │           ├── Shared/            ← Reusable validators shared across operations in this group
 │           └── {OperationName}/   ← e.g., Register/
+│               ├── {OperationName}Endpoint.cs            ← handler api
 │               ├── {OperationName}Command.cs             ← or {OperationName}Query.cs
 │               ├── {OperationName}CommandHandler.cs      ← or {OperationName}QueryHandler.cs
 │               ├── {OperationName}CommandValidator.cs    ← Commands only
@@ -79,15 +81,24 @@ src/
 │   └── Repositories/          ← OrderRepository : IOrderRepository
 │
 └── {ProjectName}.API/
-    ├── Endpoints/             ← CreateOrderEndpoint, GetOrderEndpoint, IEndpoint, EndpointExtensions
+    ├── Endpoints/             ← EndpointExtensions ← Auto register endpoint
     └── Extensions/            ← GlobalExceptionHandler, CorrelationIdMiddleware, SerilogExtensions
 ```
 
 # Key Patterns
 
-**Endpoint registration** — Implement `IEndpoint`, place in `src/MyProject.API/Endpoints/`. The endpoint is picked up automatically; no manual registration needed.
+**Endpoint registration** — Implement `IEndpoint` (defined in `src/MyProject.Application/Abstractions/Endpoints/IEndpoint.cs`), place the endpoint file **co-located with its Command/Query** in `src/MyProject.Application/Features/{Feature}/{OperationName}/`. `EndpointExtensions` scans the assembly at startup and registers all `IEndpoint` implementations automatically — no manual wiring needed.
 
-**Commands/Queries** — Add a MediatR `IRequest<Result<T>>` + handler in `src/MyProject.Application/Features/{Feature}/`. Add a FluentValidation `AbstractValidator<TRequest>` in the same folder; the pipeline runs it automatically.
+**Commands/Queries** — Each operation lives in its own folder `src/MyProject.Application/Features/{Feature}/{OperationName}/` and contains:
+
+| File | Required | Notes |
+|---|---|---|
+| `{OperationName}Command.cs` / `{OperationName}Query.cs` | yes | MediatR `IRequest<Result<T>>` — record type |
+| `{OperationName}CommandHandler.cs` / `{OperationName}QueryHandler.cs` | yes | Implements `ICommandHandler<,>` / `IQueryHandler<,>` |
+| `{OperationName}CommandValidator.cs` / `{OperationName}QueryValidator.cs` | when validation needed | `AbstractValidator<TCommand>` / `AbstractValidator<TQuery>`; pipeline picks it up automatically |
+| `{OperationName}Endpoint.cs` | yes | `IEndpoint` implementation co-located here (see Endpoint registration above) |
+| `{OperationName}Response.cs` | if returns DTO | Response record, same folder |
+| `README.md` | yes | Business documentation — what this operation does, rules, edge cases |
 
 **Result pattern** — Domain errors use `Result<T>` (not exceptions). Use `Result.Success(value)` / `Result.Failure(error)` and check `result.IsFailure` in handlers or endpoints.
 

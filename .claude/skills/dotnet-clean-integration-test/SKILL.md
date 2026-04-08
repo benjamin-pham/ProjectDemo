@@ -34,16 +34,16 @@ Unit tests (handlers, domain logic, validators) belong in the `dotnet-clean-unit
 
 ### Step 1 — Detect Project Structure
 
-Find the `.slnx` file and identify `{ProjectName}`. Verify these exist:
+This project has **no solution file** — it uses directory-level build props (`Directory.Build.props`, `Directory.Packages.props`). Identify `{ProjectName}` from the `src/` folder names. Verify these exist:
 ```
 src/{ProjectName}.API/          → API.IntegrationTests (WebApplicationFactory endpoint tests)
 src/{ProjectName}.Infrastructure/ → Infrastructure.IntegrationTests (repository/EF Core tests)
 ```
 
 Check what features/entities exist so you know what test classes to generate:
-- Minimal API endpoints in `API/Endpoints/` or controllers in `API/Controllers/`
-- Repository interfaces in `Domain/Repositories/`
-- `AppDbContext` in `Infrastructure/Data/`
+- Endpoints are **co-located with their feature** in `src/{ProjectName}.Application/Features/{Feature}/{Operation}/`
+- Repository interfaces in `src/{ProjectName}.Domain/Repositories/`
+- `AppDbContext` in `src/{ProjectName}.Infrastructure/Data/`
 
 ### Step 2 — Verify Test Projects Exist
 
@@ -62,9 +62,9 @@ Also verify that `src/{ProjectName}.API/Program.cs` ends with `public partial cl
 
 Read `references/webappfactory-setup.md` for the complete implementation. This step creates:
 
-- **`CustomWebApplicationFactory.cs`** — starts PostgreSQL container via Testcontainers, replaces the real `DbContext` connection string with the test container's, applies migrations
-- **`IntegrationTestBase.cs`** — base class all test classes inherit; holds `HttpClient`, `Respawn` instance, `SeedAsync` helpers, and `AuthenticateAs` for JWT
-- **`Helpers/JwtTokenHelper.cs`** — generates signed JWT tokens using the app's own key from config, so tests can authenticate as any user/role
+- **`Infrastructure/CustomWebApplicationFactory.cs`** — starts PostgreSQL container, injects test config (JWT secrets, connection string, API keys), applies migrations, initializes Respawner once
+- **`Infrastructure/BaseIntegrationTest.cs`** — base class for all test classes; resets DB before each test via `Factory.ResetDatabaseAsync()`, provides `SeedAsync` and `GetFromDbAsync` helpers
+- **`Infrastructure/JwtTokenHelper.cs`** — generates signed JWT tokens using hardcoded test constants (same constants injected by factory), provides `BearerToken(Guid userId)` helper
 - **`GlobalUsings.cs`** — global using declarations
 
 ### Step 4 — Generate Test Classes
@@ -101,11 +101,12 @@ The first run will pull the Docker image — this can take 30–60 seconds. Fix 
 
 ### Test Class Structure
 
-Every test class follows the same pattern — inherit `IntegrationTestBase`, use primary constructor:
+Every test class follows the same pattern — inherit `BaseIntegrationTest`, annotate with `[Collection]`, use primary constructor:
 
 ```csharp
-public class ProductsEndpointTests(CustomWebApplicationFactory factory)
-    : IntegrationTestBase(factory)
+[Collection(nameof(IntegrationTestCollection))]
+public sealed class ProductsEndpointTests(CustomWebApplicationFactory factory)
+    : BaseIntegrationTest(factory)
 {
     // Tests here
 }
@@ -132,7 +133,8 @@ Every test uses explicit Arrange / Act / Assert blocks:
 public async Task Create_WithValidCommand_ReturnsCreatedAndPersists()
 {
     // Arrange
-    AuthenticateAs(Guid.NewGuid().ToString(), "Admin");
+    Client.DefaultRequestHeaders.Authorization =
+        new AuthenticationHeaderValue("Bearer", JwtTokenHelper.GenerateToken(Guid.NewGuid()));
     var command = new CreateProductCommand("Widget", "A great widget", 29.99m);
 
     // Act
@@ -169,7 +171,7 @@ You don't need all of these for every feature — generate what makes sense for 
 
 ### Seeding Data
 
-Use `SeedAsync` from `IntegrationTestBase` to insert test data before each test:
+Use `SeedAsync` from `BaseIntegrationTest` to insert test data before each test:
 
 ```csharp
 
@@ -189,14 +191,15 @@ await SeedAsync(products);
 
 ### Authentication
 
-For protected endpoints, call `AuthenticateAs` before making the request. It attaches a valid JWT to `Client.DefaultRequestHeaders`:
+For protected endpoints, set the `Authorization` header using `JwtTokenHelper` before making the request:
 
 ```csharp
-AuthenticateAs(Guid.NewGuid().ToString(), "Admin");
+Client.DefaultRequestHeaders.Authorization =
+    new AuthenticationHeaderValue("Bearer", JwtTokenHelper.GenerateToken(Guid.NewGuid()));
 var response = await Client.PostAsJsonAsync("/api/products", command);
 ```
 
-For unauthenticated tests, do NOT call `AuthenticateAs` — `Client` starts without credentials.
+For unauthenticated tests, do NOT set the header — `Client` starts without credentials. To drop credentials mid-test: `Client.DefaultRequestHeaders.Authorization = null;`
 
 ### Reading Response Bodies
 
@@ -246,7 +249,7 @@ deleted.Should().BeNull();
 
 - Use **file-scoped namespaces** everywhere
 - Use **C# 13** features: primary constructors, collection expressions
-- `CustomWebApplicationFactory` is shared across all tests in a class via `IClassFixture` — **never modify** it inside a test
+- `CustomWebApplicationFactory` is shared across **all test classes** via `ICollectionFixture` — **never modify** it inside a test; one Docker container per test run
 - Respawn resets data between tests, but the Docker container stays alive for the full test run — this is intentional and fast
 - Always verify DB state after mutations (POST/PUT/DELETE) — don't just check the HTTP status
 - **CancellationToken** — pass `CancellationToken.None` or the test framework's token to all async repository and handler calls in test helpers; most integration test HTTP calls are already covered by `HttpClient` timeout

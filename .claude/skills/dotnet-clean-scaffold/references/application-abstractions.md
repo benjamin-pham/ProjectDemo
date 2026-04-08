@@ -172,6 +172,24 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
 
 ---
 
+## src/{ProjectName}.Application/Abstractions/Endpoints/IEndpoint.cs
+
+Defined here in the Application layer so that endpoint classes co-located with their
+Command/Query can implement it without depending on the API project.
+
+```csharp
+using Microsoft.AspNetCore.Routing;
+
+namespace {ProjectName}.Application.Abstractions.Endpoints;
+
+public interface IEndpoint
+{
+    void MapEndpoint(IEndpointRouteBuilder app);
+}
+```
+
+---
+
 ## src/{ProjectName}.Application/DependencyInjection.cs
 
 ```csharp

@@ -4,26 +4,16 @@ Create all files below. Replace `{ProjectName}` with the actual project name.
 
 ---
 
-## src/{ProjectName}.API/Endpoints/IEndpoint.cs
-
-```csharp
-namespace {ProjectName}.API.Endpoints;
-
-public interface IEndpoint
-{
-    void MapEndpoint(IEndpointRouteBuilder app);
-}
-```
-
----
-
 ## src/{ProjectName}.API/Endpoints/EndpointExtensions.cs
 
-Scans the assembly for all `IEndpoint` implementations and registers them automatically.
-This means `Program.cs` never needs to reference individual endpoint classes.
+Scans the **Application** assembly for all `IEndpoint` implementations and registers them
+automatically. `IEndpoint` is defined in `{ProjectName}.Application.Abstractions.Endpoints`
+so that endpoint classes co-located with their Command/Query don't depend on the API project.
+`Program.cs` never needs to reference individual endpoint classes.
 
 ```csharp
 using System.Reflection;
+using {ProjectName}.Application.Abstractions.Endpoints;
 
 namespace {ProjectName}.API.Endpoints;
 
@@ -246,10 +236,10 @@ public static class OpenApiExtensions
 ## src/{ProjectName}.API/Program.cs
 
 ```csharp
-using System.Reflection;
 using {ProjectName}.API.Endpoints;
 using {ProjectName}.API.Extensions;
 using {ProjectName}.Application;
+using {ProjectName}.Application.Abstractions.Endpoints;
 using {ProjectName}.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -259,7 +249,8 @@ builder.Host.AddSerilogLogging();
 
 // ── Services ─────────────────────────────────────────────────────────────────
 builder.Services.AddOpenApiServices();
-builder.Services.AddEndpoints(Assembly.GetExecutingAssembly());
+// Scan the Application assembly — endpoints are co-located with Commands/Queries there
+builder.Services.AddEndpoints(typeof(IEndpoint).Assembly);
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

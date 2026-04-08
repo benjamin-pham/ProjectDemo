@@ -1,8 +1,11 @@
 using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using MyProject.Application.Features.Auth.Register;
+using Microsoft.AspNetCore.Routing;
+using MyProject.Application.Abstractions.Endpoints;
 
-namespace MyProject.API.Endpoints.Auth;
+namespace MyProject.Application.Features.Auth.Register;
 
 internal sealed class RegisterEndpoint : IEndpoint
 {
@@ -20,13 +23,11 @@ internal sealed class RegisterEndpoint : IEndpoint
                 : Results.Problem(
                     title: result.Error.Code,
                     detail: result.Error.Description,
-                    statusCode: StatusCodes.Status409Conflict,
-                    type: "https://tools.ietf.org/html/rfc9110#section-15.5.10");
+                    statusCode: StatusCodes.Status400BadRequest);
         })
         .WithName("Register")
         .WithTags("Auth")
-        .Produces<RegisterUserResponse>(StatusCodes.Status201Created)
-        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-        .Produces<ProblemDetails>(StatusCodes.Status409Conflict);
+        .Produces<RegisterUserResponse>()
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
 }

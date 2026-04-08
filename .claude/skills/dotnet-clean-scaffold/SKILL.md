@@ -36,9 +36,9 @@ Uses real `dotnet` CLI commands — no manual file creation needed.
 |------|----------|
 | `references/msbuild-props.md` | Directory.Build.props, Directory.Packages.props, cleaned .csproj templates |
 | `references/domain-abstractions.md` | BaseEntity, IRepository, IUnitOfWork, Result, Error |
-| `references/application-abstractions.md` | ICommand, IQuery, ICommandHandler, IQueryHandler, ISqlConnectionFactory, ValidationBehavior, DI |
+| `references/application-abstractions.md` | ICommand, IQuery, ICommandHandler, IQueryHandler, ISqlConnectionFactory, **IEndpoint**, ValidationBehavior, DI |
 | `references/infrastructure-foundation.md` | AppDbContext, BaseEntityConfiguration, Repository\<T\>, SqlConnectionFactory, DI |
-| `references/api-foundation.md` | IEndpoint, EndpointExtensions, Program.cs, appsettings.json |
+| `references/api-foundation.md` | EndpointExtensions, Program.cs, appsettings.json |
 | `references/tests-scaffold.md` | 5 test projects under `tests/` — UnitTests, IntegrationTests, ArchitectureTests |
 
 ---
@@ -153,6 +153,7 @@ src/{ProjectName}.Domain/
 src/{ProjectName}.Application/
   Abstractions/
     Data/
+    Endpoints/
     Messaging/
   Behaviors/
   Exceptions/

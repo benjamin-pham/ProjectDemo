@@ -4,6 +4,10 @@
 	  <DocumentationFile>MyProject.Application.xml</DocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
@@ -16,9 +20,7 @@
     <PackageReference Include="MediatR" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    <PackageReference Include="Dapper" />
+<PackageReference Include="Dapper" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Abstractions\Endpoints\" />
     <Folder Include="Exceptions\" />
     <Folder Include="Shared\Dtos\" />
   </ItemGroup>

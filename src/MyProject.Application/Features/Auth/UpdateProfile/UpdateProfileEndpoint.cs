@@ -1,8 +1,11 @@
 using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using MyProject.Application.Features.Auth.UpdateProfile;
+using Microsoft.AspNetCore.Routing;
+using MyProject.Application.Abstractions.Endpoints;
 
-namespace MyProject.API.Endpoints.Auth;
+namespace MyProject.Application.Features.Auth.UpdateProfile;
 
 internal sealed class UpdateProfileEndpoint : IEndpoint
 {
@@ -20,13 +23,12 @@ internal sealed class UpdateProfileEndpoint : IEndpoint
                 : Results.Problem(
                     title: result.Error.Code,
                     detail: result.Error.Description,
-                    statusCode: StatusCodes.Status404NotFound);
+                    statusCode: StatusCodes.Status400BadRequest);
         })
         .RequireAuthorization()
         .WithName("UpdateProfile")
         .WithTags("Auth")
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+        .Produces(StatusCodes.Status200OK)
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
 }

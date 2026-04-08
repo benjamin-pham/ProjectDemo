@@ -4,5 +4,10 @@
         <name>MyProject.API</name>
     </assembly>
     <members>
+        <member name="T:MyProject.API.Extensions.CorrelationIdHandlerBuilderFilter">
+            <summary>
+            A filter that adds the CorrelationIdHandler to all HttpClient instances created by the IHttpClientFactory.
+            </summary>
+        </member>
     </members>
 </doc>

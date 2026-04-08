@@ -1,9 +1,12 @@
 using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using MyProject.Application.Features.Auth.Login;
+using Microsoft.AspNetCore.Routing;
+using MyProject.Application.Abstractions.Endpoints;
 using MyProject.Application.Shared.Dtos;
 
-namespace MyProject.API.Endpoints.Auth;
+namespace MyProject.Application.Features.Auth.Login;
 
 internal sealed class LoginEndpoint : IEndpoint
 {
@@ -21,12 +24,11 @@ internal sealed class LoginEndpoint : IEndpoint
                 : Results.Problem(
                     title: result.Error.Code,
                     detail: result.Error.Description,
-                    statusCode: StatusCodes.Status401Unauthorized,
-                    type: "https://tools.ietf.org/html/rfc9110#section-15.5.2");
+                    statusCode: StatusCodes.Status400BadRequest);
         })
         .WithName("Login")
         .WithTags("Auth")
         .Produces<TokenResponse>()
-        .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
 }

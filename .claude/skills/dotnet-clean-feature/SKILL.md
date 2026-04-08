@@ -21,6 +21,7 @@ description: >
 
 ## Prerequisites
 - `Application/Abstractions/Messaging/` — `ICommand`, `IQuery`, `ICommandHandler`, `IQueryHandler`
+- `Application/Abstractions/Endpoints/` — `IEndpoint`
 - `Domain/Abstractions/` — `Result<T>`, `Error`, `IUnitOfWork`
 - `Application/Abstractions/Data/` — `ISqlConnectionFactory`
 - `ValidationBehavior` pipeline registered in `DependencyInjection.cs`
@@ -42,6 +43,7 @@ src/{ProjectName}.Application/
         {OperationName}Command.cs       # or Query.cs
         {OperationName}CommandHandler.cs
         {OperationName}CommandValidator.cs   # Commands only
+        {OperationName}Endpoint.cs      # IEndpoint — always required
         {ResponseType}.cs               # if operation returns a DTO
       Shared/                           # Only if 2+ operations share a validator
         {SharedValidator}.cs
@@ -71,7 +73,13 @@ Read `references/command-template.md` for full code templates. Generate these fi
    - Validate shape/format only — business rules belong in the Handler
    - Every required property needs at least `NotEmpty()`; strings need `MaximumLength()` matching DB constraint
 
-4. **`{ResponseType}.cs`** — `public sealed record` (only if command returns a DTO, not `Result` or `Result<Guid>`)
+4. **`{OperationName}Endpoint.cs`** — `internal sealed class` implementing `IEndpoint` (always required)
+   - Maps the HTTP verb + route; delegates to `ISender.Send(command, ct)`
+   - Use `Results.Created` for POST-create, `Results.NoContent` for PUT/DELETE, `Results.Ok` for POST-action
+   - Add `.RequireAuthorization()` for protected endpoints
+   - See endpoint patterns in `references/command-template.md`
+
+5. **`{ResponseType}.cs`** — `public sealed record` (only if command returns a DTO, not `Result` or `Result<Guid>`)
 
 ---
 
@@ -87,7 +95,13 @@ Read `references/query-template.md` for full code templates. Generate these file
    - Use **Dapper + raw SQL only** — never EF Core or repositories in query handlers
    - SQL: snake_case column names with PascalCase aliases (`created_at AS CreatedAt`), raw string literals (`"""..."""`), parameterized queries
 
-3. **`{ResponseType}.cs`** — `public sealed record` with positional parameters matching SQL aliases exactly (Dapper maps by name)
+3. **`{OperationName}Endpoint.cs`** — `internal sealed class` implementing `IEndpoint` (always required)
+   - Maps GET route; delegates to `ISender.Send(query, ct)`
+   - Use `Results.Ok` for success, `Results.Problem` with 404 for not found
+   - Add `.RequireAuthorization()` for protected endpoints
+   - See endpoint patterns in `references/query-template.md`
+
+4. **`{ResponseType}.cs`** — `public sealed record` with positional parameters matching SQL aliases exactly (Dapper maps by name)
 
 ---
 
@@ -105,8 +119,10 @@ Every operation folder **must** have a `README.md`. Read `references/readme-temp
 |------|-------|
 | Namespaces | File-scoped (`namespace X;`) |
 | Handlers | `internal sealed class` |
+| Endpoints | `internal sealed class` implementing `IEndpoint` — always required, co-located with command/query |
 | Validators | `internal class` (not sealed — may be extended) |
 | Commands/Queries/DTOs | `public sealed record` |
+| Constructor DI | Primary constructor (C# 12) — no `private readonly` fields |
 | Write side | Repository + `IUnitOfWork.SaveChangesAsync()` |
 | Read side | Dapper + `ISqlConnectionFactory` — never EF Core |
 | CancellationToken | Every `Handle` method and every async call inside it |

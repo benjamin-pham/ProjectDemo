@@ -154,17 +154,21 @@ anything that talks to the outside world.
 ### API layer
 
 HTTP interface only. Contains:
-- **Endpoints** — Minimal API classes implementing `IEndpoint`
+- **EndpointExtensions** — scans the Application assembly at startup and auto-registers all `IEndpoint` implementations — no manual wiring needed
 - **Middleware** — exception handling, correlation ID, etc.
 - **DI registration** — `Program.cs` wires up all layers
 - **Extension methods** — `AddApplication()`, `AddInfrastructure()`
+
+> **Important**: Endpoint classes (`IEndpoint` implementations) are **not** placed here.
+> They live co-located with their Command/Query in `Application/Features/{Feature}/{OperationName}/`.
+> `IEndpoint` itself is defined in `Application/Abstractions/Endpoints/IEndpoint.cs`.
 
 Endpoints must be thin. They receive HTTP input, send one MediatR command/query, and
 return the result. No business logic here — if you're writing `if/else` inside an endpoint,
 it probably belongs in the handler or the entity.
 
 ```csharp
-// ✅ Thin endpoint
+// ✅ Thin endpoint — co-located in Application/Features/Orders/CreateOrder/
 public class CreateOrderEndpoint : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
@@ -224,21 +228,23 @@ src/
 │   ├── Abstractions/
 │   │   ├── Data/              ← ISqlConnectionFactory
 │   │   ├── Messaging/         ← ICommand, IQuery, ICommandHandler, IQueryHandler
+│   │   ├── Endpoints/         ← IEndpoint
 │   │   └── {Feature}/         ← feature-specific interfaces (e.g., Authentication/IJwtTokenService)
 │   ├── Behaviors/             ← ValidationBehavior
 │   ├── Exceptions/            ← ValidationException, ValidationError
-│   ├── Shared/            ← Common
-│   │   └── Dtos/    ← Common Dtos
-│   │   └── RuleValidator/    ← Common Rule validator
+│   ├── Shared/                ← Common
+│   │   └── Dtos/              ← Reusable DTOs shared across operations in this project
+│   │   └── RuleValidator/     ← Reusable validators shared across operations in this project
 │   └── Features/
 │       └── Orders/                ← Feature folder per aggregate
 │           ├── Shared/            ← Reusable validators shared across operations in this group
 │           └── CreateOrder/
+│               ├── CreateOrderEndpoint.cs         ← IEndpoint implementation (co-located here)
 │               ├── CreateOrderCommand.cs
 │               ├── CreateOrderCommandHandler.cs
 │               ├── CreateOrderCommandValidator.cs
 │               ├── OrderResponse.cs
-│               └── README.md  ← Business documentation
+│               └── README.md                      ← Business documentation
 │
 ├── {ProjectName}.Infrastructure/
 │   ├── Data/
@@ -247,7 +253,7 @@ src/
 │   └── Repositories/          ← OrderRepository : IOrderRepository
 │
 └── {ProjectName}.API/
-    ├── Endpoints/             ← CreateOrderEndpoint, GetOrderEndpoint, IEndpoint, EndpointExtensions
+    ├── Endpoints/             ← EndpointExtensions (auto-registers all IEndpoint from Application assembly)
     └── Extensions/            ← GlobalExceptionHandler, CorrelationIdMiddleware, SerilogExtensions
 ```
 

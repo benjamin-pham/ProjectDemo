@@ -186,3 +186,104 @@ public sealed record {ResponseType}(
 - For nested objects, create separate response records (e.g., `AddressResponse`)
 - If a DTO is shared across multiple features (e.g., `TokenResponse` used by Login and RefreshToken), place it in `Shared/Dtos/{ResponseType}.cs` instead
 
+---
+
+## Query Endpoint
+
+Create `src/{ProjectName}.Application/Features/{EntityPlural}/{OperationName}/{OperationName}Endpoint.cs` (co-located with the query):
+
+### GET — Single (returns 200 or 404)
+```csharp
+using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using {ProjectName}.Application.Abstractions.Endpoints;
+
+namespace {ProjectName}.Application.Features.{EntityPlural}.{OperationName};
+
+internal sealed class {OperationName}Endpoint : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/{entityPluralKebab}/{id}", async (
+            Guid id,
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new {OperationName}Query(id), ct);
+
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : Results.Problem(
+                    title: result.Error.Code,
+                    detail: result.Error.Description,
+                    statusCode: StatusCodes.Status404NotFound);
+        })
+        .RequireAuthorization()
+        .WithName("{OperationName}")
+        .WithTags("{EntityPlural}")
+        .Produces<{ResponseType}>()
+        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+    }
+}
+```
+
+### GET — List (returns 200)
+```csharp
+internal sealed class {OperationName}Endpoint : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/{entityPluralKebab}", async (
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new {OperationName}Query(), ct);
+
+            return Results.Ok(result.Value);
+        })
+        .RequireAuthorization()
+        .WithName("{OperationName}")
+        .WithTags("{EntityPlural}")
+        .Produces<IReadOnlyList<{ResponseType}>>();
+    }
+}
+```
+
+### GET — Auth-scoped (reads current user, no route param)
+```csharp
+internal sealed class {OperationName}Endpoint : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/{entityPluralKebab}/me", async (
+            ISender sender,
+            CancellationToken ct) =>
+        {
+            var result = await sender.Send(new {OperationName}Query(), ct);
+
+            return result.IsSuccess
+                ? Results.Ok(result.Value)
+                : Results.Problem(
+                    title: result.Error.Code,
+                    detail: result.Error.Description,
+                    statusCode: StatusCodes.Status404NotFound);
+        })
+        .RequireAuthorization()
+        .WithName("{OperationName}")
+        .WithTags("{EntityPlural}")
+        .Produces<{ResponseType}>()
+        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+    }
+}
+```
+
+**Guidelines:**
+- Class is `internal sealed` — same as handler
+- Route: `/api/{entityPluralKebab}` (kebab-case plural, e.g., `/api/products`)
+- `EndpointExtensions` scans the Application assembly and registers all `IEndpoint` implementations — no manual wiring needed
+- Use `.RequireAuthorization()` for protected endpoints
+- For auth-scoped queries (reads from `IUserContext`), the endpoint sends an empty query — no user ID in the route
+
