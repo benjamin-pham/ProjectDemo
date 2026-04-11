@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using MyProject.Domain.Entities;
-using MyProject.Infrastructure.Data.Configurations;
 
 namespace MyProject.Infrastructure.Data.Configurations;
 
@@ -57,7 +56,16 @@ public sealed class UserConfiguration : BaseEntityConfiguration<User>
             .HasFilter("is_deleted = false");
 
         builder.HasMany(u => u.Roles)
-            .WithMany()
-            .UsingEntity<UserRole>();
+            .WithMany(r => r.Users)
+            .UsingEntity("user_roles",
+                l => l.HasOne(typeof(Role)).WithMany().HasForeignKey("role_id")
+                      .HasConstraintName("fk_user_roles_role_id").OnDelete(DeleteBehavior.Cascade),
+                r => r.HasOne(typeof(User)).WithMany().HasForeignKey("user_id")
+                      .HasConstraintName("fk_user_roles_user_id").OnDelete(DeleteBehavior.Cascade),
+                j =>
+                {
+                    j.ToTable("user_roles");
+                    j.HasKey("user_id", "role_id");
+                });
     }
 }

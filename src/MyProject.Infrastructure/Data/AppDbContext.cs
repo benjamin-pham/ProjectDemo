@@ -15,8 +15,7 @@ public sealed class AppDbContext(
     private IDbContextTransaction? _currentTransaction;
 
     public DbSet<User> Users { get; init; }
-    public DbSet<Role> Roles => Set<Role>();
-    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Role> Roles { get; init; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

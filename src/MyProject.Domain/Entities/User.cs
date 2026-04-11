@@ -74,4 +74,15 @@ public sealed class User : BaseEntity
         HashedRefreshToken = null;
         RefreshTokenExpiresAt = null;
     }
+
+    public void AddRole(Role role)
+    {
+        if (!Roles.Contains(role))
+            Roles.Add(role);
+    }
+
+    public void RemoveRole(Role role)
+    {
+        Roles.Remove(role);
+    }
 }

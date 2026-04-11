@@ -1,0 +1,39 @@
+using FluentValidation;
+using MyProject.Application.Shared.RuleValidator;
+
+namespace MyProject.Application.Features.Users.CreateUser;
+
+public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
+{
+    public CreateUserCommandValidator()
+    {
+        RuleFor(x => x.FirstName)
+            .NotEmpty().WithMessage("FirstName không được để trống.")
+            .MaximumLength(100).WithMessage("FirstName không được vượt quá 100 ký tự.");
+
+        RuleFor(x => x.LastName)
+            .NotEmpty().WithMessage("LastName không được để trống.")
+            .MaximumLength(100).WithMessage("LastName không được vượt quá 100 ký tự.");
+
+        RuleFor(x => x.Username)
+            .NotEmpty().WithMessage("Username không được để trống.")
+            .MaximumLength(50).WithMessage("Username không được vượt quá 50 ký tự.");
+
+        RuleFor(x => x.Password)
+            .NotEmpty().WithMessage("Password không được để trống.")
+            .SetValidator(new PasswordValidator());
+
+        When(x => x.Email is not null, () =>
+            RuleFor(x => x.Email!)
+                .EmailAddress().WithMessage("Email không đúng định dạng."));
+
+        When(x => x.Phone is not null, () =>
+            RuleFor(x => x.Phone!)
+                .MaximumLength(20).WithMessage("Phone không được vượt quá 20 ký tự."));
+
+        When(x => x.Birthday.HasValue, () =>
+            RuleFor(x => x.Birthday!.Value)
+                .Must(b => b <= DateOnly.FromDateTime(DateTime.UtcNow))
+                .WithMessage("Birthday không được là ngày tương lai."));
+    }
+}
