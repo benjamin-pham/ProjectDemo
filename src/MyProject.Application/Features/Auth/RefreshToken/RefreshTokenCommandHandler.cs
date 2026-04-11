@@ -1,10 +1,9 @@
-﻿using MyProject.Application.Abstractions.Authentication;
+using MyProject.Application.Abstractions.Authentication;
 using MyProject.Application.Abstractions.Messaging;
-using MyProject.Application.Features.Auth.Login;
 using MyProject.Domain.Abstractions;
 using MyProject.Domain.Repositories;
 using Microsoft.Extensions.Logging;
-using MyProject.Application.Shared.Dtos;
+using MyProject.Application.Features.Auth.Shared;
 
 namespace MyProject.Application.Features.Auth.RefreshToken;
 
@@ -33,11 +32,10 @@ internal sealed class RefreshTokenCommandHandler(
             return Result.Failure<TokenResponse>(InvalidRefreshToken);
         }
 
-        var newAccessToken = jwtTokenService.GenerateAccessToken(user.Id);
-        var newRefreshToken = jwtTokenService.GenerateRefreshToken();
-        var newHashedToken = jwtTokenService.HashToken(newRefreshToken);
+        var tokenResponse = jwtTokenService.GenerateToken(user.Id.ToString());
+        var newHashedToken = jwtTokenService.HashToken(tokenResponse.RefreshToken);
 
-        user.SetRefreshToken(newHashedToken, DateTime.UtcNow.AddDays(7));
+        user.SetRefreshToken(newHashedToken, tokenResponse.RefreshTokenExpiresAt);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -46,6 +44,6 @@ internal sealed class RefreshTokenCommandHandler(
             user.Id,
             DateTime.UtcNow);
 
-        return new TokenResponse(newAccessToken, newRefreshToken, 86400, "Bearer");
+        return tokenResponse;
     }
 }

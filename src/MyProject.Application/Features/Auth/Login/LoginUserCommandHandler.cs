@@ -1,9 +1,9 @@
-﻿using MyProject.Application.Abstractions.Authentication;
+using MyProject.Application.Abstractions.Authentication;
 using MyProject.Application.Abstractions.Messaging;
 using MyProject.Domain.Abstractions;
 using MyProject.Domain.Repositories;
 using Microsoft.Extensions.Logging;
-using MyProject.Application.Shared.Dtos;
+using MyProject.Application.Features.Auth.Shared;
 
 namespace MyProject.Application.Features.Auth.Login;
 
@@ -34,11 +34,10 @@ internal sealed class LoginUserCommandHandler(
             return Result.Failure<TokenResponse>(InvalidCredentials);
         }
 
-        var accessToken = jwtTokenService.GenerateAccessToken(user.Id);
-        var refreshToken = jwtTokenService.GenerateRefreshToken();
-        var hashedToken = jwtTokenService.HashToken(refreshToken);
+        var tokenResponse = jwtTokenService.GenerateToken(user.Id.ToString());
+        var hashedToken = jwtTokenService.HashToken(tokenResponse.RefreshToken);
 
-        user.SetRefreshToken(hashedToken, DateTime.UtcNow.AddDays(7));
+        user.SetRefreshToken(hashedToken, tokenResponse.RefreshTokenExpiresAt);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -47,6 +46,6 @@ internal sealed class LoginUserCommandHandler(
             user.Id,
             DateTime.UtcNow);
 
-        return new TokenResponse(accessToken, refreshToken, 86400, "Bearer");
+        return tokenResponse;
     }
 }

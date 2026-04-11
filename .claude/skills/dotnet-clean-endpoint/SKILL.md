@@ -57,13 +57,13 @@ Folder: **`src/{Project}.Application/Features/{Feature}/{OperationName}/`** — 
 // Result<T> — with value
 var result = await sender.Send(command, ct);
 return result.IsSuccess
-    ? Results.Created($"/api/products/{result.Value.Id}", result.Value)
+    ? Results.Ok(result.Value)
     : Results.Problem(title: result.Error.Code, detail: result.Error.Description,
                       statusCode: StatusCodes.Status400BadRequest);
 
 // Result (void) — no value
 return result.IsSuccess
-    ? Results.NoContent()
+    ? Results.Ok()
     : Results.Problem(result.Error.Description, statusCode: StatusCodes.Status400BadRequest);
 ```
 
@@ -74,15 +74,15 @@ Every route MUST end with `.WithName()`, `.WithTags()`, and all `.Produces<T>()`
 | Method | Required Produces |
 |--------|------------------|
 | GET list | `.Produces<IEnumerable<T>>()` |
-| GET by id | `.Produces<T>()` + `404` |
-| POST | `.Produces<T>(201)` + `400` (or `409` if conflict) |
-| PUT/PATCH (returns value) | `.Produces<T>()` + `400` + `404` |
-| PUT/PATCH (void) | `.Produces(204)` + `400` + `404` |
-| DELETE | `.Produces(204)` + `404` |
+| GET by id | `.Produces<T>()` + `400` |
+| POST | `.Produces<T>()` + `400` |
+| PUT/PATCH (returns value) | `.Produces<T>()` + `400` |
+| PUT/PATCH (void) | `.Produces(200)` + `400` |
+| DELETE | `.Produces(200)` + `400` |
 
-Use `StatusCodes.StatusXXX` constants in code. Add extra codes if the handler returns them (401, 409, 422…).
+Use `StatusCodes.StatusXXX` constants in code. Success is always `200 OK`, failure is always `400 Bad Request`.
 
-**Authorization:** add `.RequireAuthorization()` before `.WithName()` on protected routes.
+**Authorization:** add `.RequireAuthorization()` before `.WithName()` on protected routes. Also add `.Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)` + `.Produces<ProblemDetails>(StatusCodes.Status403Forbidden)` to document that the middleware returns these codes.
 
 **RFC `type` URI in `Results.Problem`:** pass `type:` when the HTTP semantics warrant it (e.g., 401 → `"https://tools.ietf.org/html/rfc9110#section-15.5.2"`, 409 → `"https://tools.ietf.org/html/rfc9110#section-15.5.10"`). Omit for generic 400/404.
 

@@ -1,8 +1,10 @@
-﻿namespace MyProject.Application.Abstractions.Authentication;
+﻿using System.Security.Claims;
+using MyProject.Application.Features.Auth.Shared;
+
+namespace MyProject.Application.Abstractions.Authentication;
 
 public interface IJwtTokenService
 {
-    string GenerateAccessToken(Guid userId);
-    string GenerateRefreshToken();
+    TokenResponse GenerateToken(string sub, params IEnumerable<Claim> extraClaims);
     string HashToken(string token);
 }

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using MyProject.Application.Abstractions.Endpoints;
-using MyProject.Application.Shared.Dtos;
+using MyProject.Application.Features.Auth.Shared;
 
 namespace MyProject.Application.Features.Auth.Login;
 

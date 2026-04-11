@@ -68,7 +68,8 @@ internal sealed class GetAllProductsEndpoint : IEndpoint
         })
         .WithName("GetAllProducts")
         .WithTags("Products")
-        .Produces<IEnumerable<ProductSummaryResponse>>();
+        .Produces<IEnumerable<ProductSummaryResponse>>()
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
 }
 ```
@@ -95,12 +96,12 @@ internal sealed class GetProductByIdEndpoint : IEndpoint
             return result.IsSuccess
                 ? Results.Ok(result.Value)
                 : Results.Problem(title: result.Error.Code, detail: result.Error.Description,
-                                  statusCode: StatusCodes.Status404NotFound);
+                                  statusCode: StatusCodes.Status400BadRequest);
         })
         .WithName("GetProductById")
         .WithTags("Products")
         .Produces<ProductResponse>()
-        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
 }
 ```
@@ -125,13 +126,13 @@ internal sealed class CreateProductEndpoint : IEndpoint
         {
             var result = await sender.Send(command, ct);
             return result.IsSuccess
-                ? Results.Created($"/api/products/{result.Value.Id}", result.Value)
+                ? Results.Ok(result.Value)
                 : Results.Problem(title: result.Error.Code, detail: result.Error.Description,
                                   statusCode: StatusCodes.Status400BadRequest);
         })
         .WithName("CreateProduct")
         .WithTags("Products")
-        .Produces<CreateProductResponse>(StatusCodes.Status201Created)
+        .Produces<CreateProductResponse>()
         .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
 }
@@ -159,18 +160,17 @@ internal sealed class UpdateProductEndpoint : IEndpoint
             return result.IsSuccess
                 ? Results.Ok(result.Value)
                 : Results.Problem(title: result.Error.Code, detail: result.Error.Description,
-                                  statusCode: StatusCodes.Status404NotFound);
+                                  statusCode: StatusCodes.Status400BadRequest);
         })
         .WithName("UpdateProduct")
         .WithTags("Products")
         .Produces<UpdateProductResponse>()
-        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
 }
 ```
 
-> If `UpdateProductCommand` returns `Result` (void), use `Results.NoContent()` + `.Produces(204)` instead.
+> If `UpdateProductCommand` returns `Result` (void), use `Results.Ok()` + `.Produces(StatusCodes.Status200OK)` instead.
 
 ## Delete
 
@@ -192,14 +192,14 @@ internal sealed class DeleteProductEndpoint : IEndpoint
         {
             var result = await sender.Send(new DeleteProductCommand(id), ct);
             return result.IsSuccess
-                ? Results.NoContent()
+                ? Results.Ok()
                 : Results.Problem(title: result.Error.Code, detail: result.Error.Description,
-                                  statusCode: StatusCodes.Status404NotFound);
+                                  statusCode: StatusCodes.Status400BadRequest);
         })
         .WithName("DeleteProduct")
         .WithTags("Products")
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+        .Produces(StatusCodes.Status200OK)
+        .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
     }
 }
 ```
@@ -215,41 +215,20 @@ internal sealed class DeleteProductEndpoint : IEndpoint
 
 ## Authorization
 
-Add `.RequireAuthorization()` before `.WithName()` on any protected route:
+Add `.RequireAuthorization()` before `.WithName()` on any protected route, and declare 401/403 in Produces so they appear in OpenAPI:
 
 ```csharp
 app.MapGet("/api/auth/me", async (...) => { ... })
     .RequireAuthorization()
     .WithName("GetProfile")
     .WithTags("Auth")
-    ...
+    .Produces<ProfileResponse>()
+    .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+    .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
+    .Produces<ProblemDetails>(StatusCodes.Status403Forbidden)
 ```
 
-## RFC `type` URI in `Results.Problem`
-
-Pass `type:` only when the status code has a well-known RFC meaning:
-
-| Status | `type` URI |
-|--------|-----------|
-| 401 Unauthorized | `"https://tools.ietf.org/html/rfc9110#section-15.5.2"` |
-| 409 Conflict | `"https://tools.ietf.org/html/rfc9110#section-15.5.10"` |
-
-For generic 400 / 404 responses, omit `type:`.
-
-```csharp
-// With type (401)
-Results.Problem(
-    title: result.Error.Code,
-    detail: result.Error.Description,
-    statusCode: StatusCodes.Status401Unauthorized,
-    type: "https://tools.ietf.org/html/rfc9110#section-15.5.2")
-
-// Without type (400/404)
-Results.Problem(
-    title: result.Error.Code,
-    detail: result.Error.Description,
-    statusCode: StatusCodes.Status400BadRequest)
-```
+> 401/403 are returned by ASP.NET authorization middleware, not by the handler itself — declare them in `.Produces` for OpenAPI documentation only.
 
 ## Result (void) — No Response DTO
 
@@ -258,8 +237,8 @@ When handler returns `Result` (not `Result<T>`):
 ```csharp
 var result = await sender.Send(command, ct);
 return result.IsSuccess
-    ? Results.NoContent()
+    ? Results.Ok()
     : Results.Problem(result.Error.Description, statusCode: StatusCodes.Status400BadRequest);
 ```
 
-Use `.Produces(StatusCodes.Status204NoContent)` instead of `.Produces<T>()`.
+Use `.Produces(StatusCodes.Status200OK)` instead of `.Produces<T>()`.

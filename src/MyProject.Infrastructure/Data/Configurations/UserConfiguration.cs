@@ -55,5 +55,9 @@ public sealed class UserConfiguration : BaseEntityConfiguration<User>
             .IsUnique()
             .HasDatabaseName("ix_users_username")
             .HasFilter("is_deleted = false");
+
+        builder.HasMany(u => u.Roles)
+            .WithMany()
+            .UsingEntity<UserRole>();
     }
 }

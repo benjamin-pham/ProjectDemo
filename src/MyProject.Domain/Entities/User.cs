@@ -14,6 +14,8 @@ public sealed class User : BaseEntity
     public string? HashedRefreshToken { get; set; }
     public DateTime? RefreshTokenExpiresAt { get; set; }
 
+    public ICollection<Role> Roles { get; set; } = [];
+
     public User() { }
 
     public static User Create(
