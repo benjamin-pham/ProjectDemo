@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using MyProject.Application.Abstractions.Endpoints;
+using MyProject.Domain.Abstractions;
 
 namespace MyProject.Application.Features.Users.GetUsers;
 
@@ -12,16 +13,11 @@ internal sealed class GetUsersEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/users", async (
-            int page,
-            int pageSize,
-            ISender sender,
+            [AsParameters] GetUsersQuery request,
+            [FromServices] ISender sender,
             CancellationToken ct) =>
         {
-            var query = new GetUsersQuery(
-                Page: page > 0 ? page : 1,
-                PageSize: pageSize is > 0 and <= 100 ? pageSize : 20);
-
-            var result = await sender.Send(query, ct);
+            var result = await sender.Send(request, ct);
 
             return result.IsSuccess
                 ? Results.Ok(result.Value)
@@ -33,7 +29,7 @@ internal sealed class GetUsersEndpoint : IEndpoint
         .RequireAuthorization()
         .WithName("GetUsers")
         .WithTags("Users")
-        .Produces<PagedResponse<UserListItemResponse>>()
+        .Produces<PagedList<GetUsersResponse>>()
         .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
     }
 }

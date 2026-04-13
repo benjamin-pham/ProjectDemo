@@ -1,15 +1,14 @@
 using Dapper;
 using MyProject.Application.Abstractions.Data;
 using MyProject.Application.Abstractions.Messaging;
-using MyProject.Application.Features.Users.GetUsers;
 using MyProject.Domain.Abstractions;
 
 namespace MyProject.Application.Features.Roles.GetRoles;
 
 internal sealed class GetRolesQueryHandler(ISqlConnectionFactory sqlConnectionFactory)
-    : IQueryHandler<GetRolesQuery, PagedResponse<RoleListItemResponse>>
+    : IQueryHandler<GetRolesQuery, PagedList<GetRolesResponse>>
 {
-    public async Task<Result<PagedResponse<RoleListItemResponse>>> Handle(
+    public async Task<Result<PagedList<GetRolesResponse>>> Handle(
         GetRolesQuery request,
         CancellationToken cancellationToken)
     {
@@ -17,38 +16,29 @@ internal sealed class GetRolesQueryHandler(ISqlConnectionFactory sqlConnectionFa
 
         const string sql = """
             SELECT
-                COUNT(*) OVER()  AS TotalCount,
-                id               AS Id,
-                name             AS Name,
-                description      AS Description,
-                type             AS Type,
-                permissions      AS Permissions,
-                created_at       AS CreatedAt
+                id          AS Id,
+                name        AS Name,
+                description AS Description,
+                type        AS Type,
+                permissions AS Permissions,
+                created_at  AS CreatedAt
             FROM roles
             WHERE is_deleted = false
             ORDER BY created_at DESC
-            LIMIT @PageSize OFFSET @Offset
+            LIMIT @PageSize OFFSET @Offset;
+
+            SELECT COUNT(*)
+            FROM roles
+            WHERE is_deleted = false;
             """;
 
-        var rows = await connection.QueryAsync<RoleRow>(sql,
-            new { request.PageSize, Offset = (request.Page - 1) * request.PageSize });
+        using var multi = await connection.QueryMultipleAsync(sql,
+            new { request.PageSize, Offset = (request.PageNumber - 1) * request.PageSize });
 
-        var list = rows.ToList();
-        var totalCount = list.Count > 0 ? list[0].TotalCount : 0;
+        var items = (await multi.ReadAsync<GetRolesResponse>()).ToList();
 
-        var items = list.Select(r => new RoleListItemResponse(
-            r.Id, r.Name, r.Description, r.Type,
-            r.Permissions ?? [], r.CreatedAt)).ToList();
+        var totalCount = await multi.ReadSingleAsync<int>();
 
-        return new PagedResponse<RoleListItemResponse>(items, totalCount, request.Page, request.PageSize);
+        return new PagedList<GetRolesResponse>(items, totalCount, request.PageNumber!.Value, request.PageSize!.Value);
     }
-
-    private sealed record RoleRow(
-        int TotalCount,
-        Guid Id,
-        string Name,
-        string Description,
-        string Type,
-        List<string>? Permissions,
-        DateTime CreatedAt);
 }

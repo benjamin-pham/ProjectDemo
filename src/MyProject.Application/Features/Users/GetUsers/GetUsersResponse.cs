@@ -1,6 +1,6 @@
 namespace MyProject.Application.Features.Users.GetUsers;
 
-public sealed record UserListItemResponse(
+public sealed record GetUsersResponse(
     Guid Id,
     string FirstName,
     string LastName,
@@ -9,9 +9,3 @@ public sealed record UserListItemResponse(
     string? Phone,
     DateOnly? Birthday,
     DateTime CreatedAt);
-
-public sealed record PagedResponse<T>(
-    IReadOnlyList<T> Items,
-    int TotalCount,
-    int Page,
-    int PageSize);

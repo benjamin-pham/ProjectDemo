@@ -13,8 +13,8 @@ internal sealed class LoginEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/auth/login", async (
-            LoginUserCommand command,
-            ISender sender,
+            [FromBody] LoginUserCommand command,
+            [FromServices] ISender sender,
             CancellationToken ct) =>
         {
             var result = await sender.Send(command, ct);

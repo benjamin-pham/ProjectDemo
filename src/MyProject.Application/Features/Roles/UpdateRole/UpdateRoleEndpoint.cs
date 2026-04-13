@@ -12,19 +12,11 @@ internal sealed class UpdateRoleEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPut("/api/roles/{id:guid}", async (
-            Guid id,
-            UpdateRoleRequest body,
-            ISender sender,
+            [FromBody] UpdateRoleCommand request,
+            [FromServices] ISender sender,
             CancellationToken ct) =>
         {
-            var command = new UpdateRoleCommand(
-                id,
-                body.Name,
-                body.Description,
-                body.Type,
-                body.Permissions);
-
-            var result = await sender.Send(command, ct);
+            var result = await sender.Send(request, ct);
 
             return result.IsSuccess
                 ? Results.Ok(result.Value)

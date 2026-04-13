@@ -12,21 +12,11 @@ internal sealed class UpdateUserEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPut("/api/users/{id:guid}", async (
-            Guid id,
-            UpdateUserRequest body,
+            UpdateUserCommand request,
             ISender sender,
             CancellationToken ct) =>
         {
-            var command = new UpdateUserCommand(
-                id,
-                body.FirstName,
-                body.LastName,
-                body.Email,
-                body.Phone,
-                body.Birthday,
-                body.RoleIds);
-
-            var result = await sender.Send(command, ct);
+            var result = await sender.Send(request, ct);
 
             return result.IsSuccess
                 ? Results.Ok(result.Value)
@@ -46,11 +36,3 @@ internal sealed class UpdateUserEndpoint : IEndpoint
         .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
     }
 }
-
-internal sealed record UpdateUserRequest(
-    string FirstName,
-    string LastName,
-    string? Email,
-    string? Phone,
-    DateOnly? Birthday,
-    IReadOnlyList<Guid>? RoleIds);

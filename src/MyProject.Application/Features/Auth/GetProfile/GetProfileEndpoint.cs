@@ -12,7 +12,7 @@ internal sealed class GetProfileEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/auth/me", async (
-            ISender sender,
+            [FromServices] ISender sender,
             CancellationToken ct) =>
         {
             var result = await sender.Send(new GetProfileQuery(), ct);

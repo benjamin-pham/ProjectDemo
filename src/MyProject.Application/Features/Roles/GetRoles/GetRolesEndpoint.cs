@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using MyProject.Application.Abstractions.Endpoints;
 using MyProject.Application.Features.Users.GetUsers;
+using MyProject.Domain.Abstractions;
 
 namespace MyProject.Application.Features.Roles.GetRoles;
 
@@ -13,16 +14,11 @@ internal sealed class GetRolesEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/roles", async (
-            int page,
-            int pageSize,
-            ISender sender,
+            [AsParameters] GetRolesQuery request,
+            [FromServices] ISender sender,
             CancellationToken ct) =>
         {
-            var query = new GetRolesQuery(
-                Page: page > 0 ? page : 1,
-                PageSize: pageSize is > 0 and <= 100 ? pageSize : 20);
-
-            var result = await sender.Send(query, ct);
+            var result = await sender.Send(request, ct);
 
             return result.IsSuccess
                 ? Results.Ok(result.Value)
@@ -31,10 +27,10 @@ internal sealed class GetRolesEndpoint : IEndpoint
                     detail: result.Error.Description,
                     statusCode: StatusCodes.Status400BadRequest);
         })
-        .RequireAuthorization()
+        // .RequireAuthorization()
         .WithName("GetRoles")
         .WithTags("Roles")
-        .Produces<PagedResponse<RoleListItemResponse>>()
+        .Produces<PagedList<GetRolesResponse>>()
         .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
     }
 }

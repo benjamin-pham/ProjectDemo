@@ -12,8 +12,8 @@ internal sealed class CreateRoleEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/roles", async (
-            CreateRoleCommand command,
-            ISender sender,
+            [FromBody] CreateRoleCommand command,
+            [FromServices] ISender sender,
             CancellationToken ct) =>
         {
             var result = await sender.Send(command, ct);

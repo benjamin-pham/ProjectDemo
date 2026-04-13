@@ -17,7 +17,7 @@ dotnet test tests/MyProject.Application.UnitTests/
 dotnet test --filter "FullyQualifiedName~SomeTestName"
 ```
 
-No solution file — this is a modern .NET 10 project using directory-level build props.
+This is a modern .NET 10 project using directory-level build props.
 
 # Architecture
 
@@ -47,7 +47,7 @@ Clean Architecture with 4 layers (strict unidirectional dependency: API → Appl
 ```
 src/
 ├── {ProjectName}.Domain/
-│   ├── Abstractions/          ← IRepository<T>, IUnitOfWork, IUserContext, IDateTimeProvider, Result<T>, Error
+│   ├── Abstractions/          ← IRepository<T>, IUnitOfWork, IUserContext, IDateTimeProvider, Result<T>, Error, PagedListFilter, PagedList<T>
 │   ├── Entities/              ← Order, Customer, Product (with behavior methods)
 │   ├── Enums/                 ← OrderStatus, PaymentMethod
 │   └── Repositories/          ← IOrderRepository, IProductRepository (entity-specific interfaces)
@@ -70,7 +70,7 @@ src/
 │               ├── {OperationName}Endpoint.cs            ← handler api
 │               ├── {OperationName}Command.cs             ← or {OperationName}Query.cs
 │               ├── {OperationName}CommandHandler.cs      ← or {OperationName}QueryHandler.cs
-│               ├── {OperationName}CommandValidator.cs    ← Commands only
+│               ├── {OperationName}CommandValidator.cs    ← or {OperationName}QueryValidator.cs
 │               ├── {OperationName}Response.cs            ← if operation returns a DTO — always its own file, same directory as handler
 │               └── README.md                             ← Business documentation
 │
@@ -95,12 +95,14 @@ src/
 |---|---|---|
 | `{OperationName}Command.cs` / `{OperationName}Query.cs` | yes | MediatR `IRequest<Result<T>>` — record type |
 | `{OperationName}CommandHandler.cs` / `{OperationName}QueryHandler.cs` | yes | Implements `ICommandHandler<,>` / `IQueryHandler<,>` |
-| `{OperationName}CommandValidator.cs` / `{OperationName}QueryValidator.cs` | when validation needed | `AbstractValidator<TCommand>` / `AbstractValidator<TQuery>`; pipeline picks it up automatically |
+| `{OperationName}CommandValidator.cs` / `{OperationName}QueryValidator.cs` | when validation needed | `AbstractValidator<TCommand>` / `AbstractValidator<TQuery>`; for paginated queries, validator should inherit `PagedListValidator<TQuery>`; pipeline picks it up automatically |
 | `{OperationName}Endpoint.cs` | yes | `IEndpoint` implementation co-located here (see Endpoint registration above) |
 | `{OperationName}Response.cs` | if returns DTO | Response record, same folder |
 | `README.md` | yes | Business documentation — what this operation does, rules, edge cases |
 
 **Result pattern** — Domain errors use `Result<T>` (not exceptions). Use `Result.Success(value)` / `Result.Failure(error)` and check `result.IsFailure` in handlers or endpoints.
+
+**Pagination** — When an operation needs paging, let the query inherit `PagedListFilter` from `src/MyProject.Domain/Abstractions/PagedListFilter.cs` so it carries `PageNumber`, `PageSize`, `SortBy`, `SortDirection`, and `SearchTerm`. The corresponding query validator should inherit `PagedListValidator<TQuery>` from `src/MyProject.Application/Shared/RuleValidator/PagedListValidator.cs` to validate `PageNumber` and `PageSize`. Return `PagedList<T>` from `src/MyProject.Domain/Abstractions/PagedList.cs` so responses consistently include `Items`, `PageNumber`, `PageSize`, `TotalItems`, `TotalPages`, `HasNextPage`, and `HasPreviousPage`. For paginated read queries, use Dapper `QueryMultipleAsync` to fetch both the page items and total count in a single database round-trip.
 
 **Audit trail** — All entities extending `BaseEntity` automatically get `CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy` set by `AppDbContext.SaveChangesAsync`. `IsDeleted` enables soft deletes.
 
@@ -127,5 +129,5 @@ All NuGet versions are centrally managed in `Directory.Packages.props`. Do not s
 - Nullable reference types enabled
 - Async all the way - no .Result or .Wait()
 - Record types for DTOs
-- Always IOptions<T> or IOption no raw config["Key]
+- Always IOptions<T> no raw config["Key"]
 - NEVER use DateTime.Now - use IDateTimeProvider

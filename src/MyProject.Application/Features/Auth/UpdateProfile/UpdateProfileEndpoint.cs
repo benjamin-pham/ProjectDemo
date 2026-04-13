@@ -12,8 +12,8 @@ internal sealed class UpdateProfileEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPut("/api/auth/me", async (
-            UpdateProfileCommand command,
-            ISender sender,
+            [FromBody] UpdateProfileCommand command,
+            [FromServices] ISender sender,
             CancellationToken ct) =>
         {
             var result = await sender.Send(command, ct);

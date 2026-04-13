@@ -6,9 +6,9 @@ using MyProject.Domain.Abstractions;
 namespace MyProject.Application.Features.Users.GetUsers;
 
 internal sealed class GetUsersQueryHandler(ISqlConnectionFactory sqlConnectionFactory)
-    : IQueryHandler<GetUsersQuery, PagedResponse<UserListItemResponse>>
+    : IQueryHandler<GetUsersQuery, PagedList<GetUsersResponse>>
 {
-    public async Task<Result<PagedResponse<UserListItemResponse>>> Handle(
+    public async Task<Result<PagedList<GetUsersResponse>>> Handle(
         GetUsersQuery request,
         CancellationToken cancellationToken)
     {
@@ -16,42 +16,30 @@ internal sealed class GetUsersQueryHandler(ISqlConnectionFactory sqlConnectionFa
 
         const string sql = """
             SELECT
-                COUNT(*) OVER()  AS TotalCount,
-                id               AS Id,
-                first_name       AS FirstName,
-                last_name        AS LastName,
-                username         AS Username,
-                email            AS Email,
-                phone            AS Phone,
-                birthday         AS Birthday,
-                created_at       AS CreatedAt
+                id         AS Id,
+                first_name AS FirstName,
+                last_name  AS LastName,
+                username   AS Username,
+                email      AS Email,
+                phone      AS Phone,
+                birthday   AS Birthday,
+                created_at AS CreatedAt
             FROM users
             WHERE is_deleted = false
             ORDER BY created_at DESC
-            LIMIT @PageSize OFFSET @Offset
+            LIMIT @PageSize OFFSET @Offset;
+
+            SELECT COUNT(*)
+            FROM users
+            WHERE is_deleted = false;
             """;
 
-        var rows = await connection.QueryAsync<UserRow>(sql,
-            new { request.PageSize, Offset = (request.Page - 1) * request.PageSize });
+        using var multi = await connection.QueryMultipleAsync(sql,
+            new { request.PageSize, Offset = (request.PageNumber - 1) * request.PageSize });
 
-        var list = rows.ToList();
-        var totalCount = list.Count > 0 ? list[0].TotalCount : 0;
+        var items = (await multi.ReadAsync<GetUsersResponse>()).ToList();
+        var totalCount = await multi.ReadSingleAsync<int>();
 
-        var items = list.Select(r => new UserListItemResponse(
-            r.Id, r.FirstName, r.LastName, r.Username,
-            r.Email, r.Phone, r.Birthday, r.CreatedAt)).ToList();
-
-        return new PagedResponse<UserListItemResponse>(items, totalCount, request.Page, request.PageSize);
+        return new PagedList<GetUsersResponse>(items, totalCount, request.PageNumber!.Value, request.PageSize!.Value);
     }
-
-    private sealed record UserRow(
-        int TotalCount,
-        Guid Id,
-        string FirstName,
-        string LastName,
-        string Username,
-        string? Email,
-        string? Phone,
-        DateOnly? Birthday,
-        DateTime CreatedAt);
 }

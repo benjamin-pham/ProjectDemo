@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MyProject.Infrastructure</name>
+    </assembly>
+    <members>
+        <member name="T:MyProject.Infrastructure.Migrations.AddUsersTable">
+            <inheritdoc />
+        </member>
+        <member name="M:MyProject.Infrastructure.Migrations.AddUsersTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:MyProject.Infrastructure.Migrations.AddUsersTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:MyProject.Infrastructure.Migrations.AddUsersTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:MyProject.Infrastructure.Migrations.RefactorRoleImplicitManyToMany">
+            <inheritdoc />
+        </member>
+        <member name="M:MyProject.Infrastructure.Migrations.RefactorRoleImplicitManyToMany.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:MyProject.Infrastructure.Migrations.RefactorRoleImplicitManyToMany.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:MyProject.Infrastructure.Migrations.RefactorRoleImplicitManyToMany.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

@@ -1,9 +1,9 @@
 namespace MyProject.Application.Features.Roles.GetRoles;
 
-public sealed record RoleListItemResponse(
+public sealed record GetRolesResponse(
     Guid Id,
     string Name,
     string Description,
     string Type,
-    List<string> Permissions,
+    string[] Permissions,
     DateTime CreatedAt);

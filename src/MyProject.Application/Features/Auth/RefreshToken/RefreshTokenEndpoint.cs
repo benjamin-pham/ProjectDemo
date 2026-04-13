@@ -13,8 +13,8 @@ internal sealed class RefreshTokenEndpoint : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/auth/refresh-token", async (
-            RefreshTokenCommand command,
-            ISender sender,
+            [FromBody] RefreshTokenCommand command,
+            [FromServices] ISender sender,
             CancellationToken ct) =>
         {
             var result = await sender.Send(command, ct);
