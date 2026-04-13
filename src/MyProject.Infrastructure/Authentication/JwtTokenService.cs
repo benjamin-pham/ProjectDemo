@@ -1,53 +1,47 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MyProject.Application.Abstractions.Authentication;
+using MyProject.Application.Features.Auth.Shared;
 
 namespace MyProject.Infrastructure.Authentication;
 
-public sealed class JwtTokenService(IConfiguration configuration) : IJwtTokenService
+public sealed class JwtTokenService(IOptionsMonitor<JwtSettings> options) : IJwtTokenService
 {
-    private readonly string _secretKey = configuration["Authentication:Jwt:SecretKey"]
-        ?? throw new InvalidOperationException("JWT SecretKey is not configured.");
+    private JwtSettings Settings => options.CurrentValue;
 
-    private readonly string _issuer = configuration["Authentication:Jwt:Issuer"]
-        ?? throw new InvalidOperationException("JWT Issuer is not configured.");
-
-    private readonly string _audience = configuration["Authentication:Jwt:Audience"]
-        ?? throw new InvalidOperationException("JWT Audience is not configured.");
-
-    private readonly int _accessTokenExpirationMinutes =
-        int.Parse(configuration["Authentication:Jwt:AccessTokenExpirationMinutes"] ?? "1440");
-
-    public string GenerateAccessToken(Guid userId)
+    public TokenResponse GenerateToken(string sub, params IEnumerable<Claim> extraClaims)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secretKey));
+        var accessTokenExpiresAt = DateTime.UtcNow.AddMinutes(Settings.AccessTokenExpirationMinutes);
+        var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(Settings.RefreshTokenExpirationDays);
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Settings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new Claim(JwtRegisteredClaimNames.Sub, sub),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Iat,
                 DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64)
-        };
+        }.Concat(extraClaims ?? []);
 
-        var token = new JwtSecurityToken(
-            issuer: _issuer,
-            audience: _audience,
+        var jwtToken = new JwtSecurityToken(
+            issuer: Settings.Issuer,
+            audience: Settings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_accessTokenExpirationMinutes),
+            expires: accessTokenExpiresAt,
             signingCredentials: credentials);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
+        var accessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken);
+        var refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
 
-    public string GenerateRefreshToken() =>
-        Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        return new TokenResponse(accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt, "Bearer");
+    }
 
     public string HashToken(string token)
     {

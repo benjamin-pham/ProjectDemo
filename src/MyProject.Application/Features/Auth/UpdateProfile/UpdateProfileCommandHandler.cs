@@ -1,5 +1,6 @@
 ﻿using MyProject.Application.Abstractions.Messaging;
 using MyProject.Domain.Abstractions;
+using MyProject.Domain.Errors;
 using MyProject.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 
@@ -12,14 +13,12 @@ internal sealed class UpdateProfileCommandHandler(
     ILogger<UpdateProfileCommandHandler> logger)
     : ICommandHandler<UpdateProfileCommand>
 {
-    private static readonly Error UserNotFound =
-        new("User.NotFound", "Người dùng không tồn tại.");
 
     public async Task<Result> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
     {
         var user = await userRepository.GetByIdAsync(userContext.UserId, cancellationToken);
         if (user is null)
-            return Result.Failure(UserNotFound);
+            return Result.Failure(UserErrors.NotFound);
 
         user.UpdateProfile(
             request.FirstName,

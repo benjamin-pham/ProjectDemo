@@ -1,6 +1,6 @@
 ﻿using MyProject.Application.Abstractions.Messaging;
 using MyProject.Application.Features.Auth.Login;
-using MyProject.Application.Shared.Dtos;
+using MyProject.Application.Features.Auth.Shared;
 
 namespace MyProject.Application.Features.Auth.RefreshToken;
 

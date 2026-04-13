@@ -1,5 +1,7 @@
-﻿using MyProject.Application.Abstractions.Authentication;
+using System.Security.Claims;
+using MyProject.Application.Abstractions.Authentication;
 using MyProject.Application.Features.Auth.Login;
+using MyProject.Application.Features.Auth.Shared;
 using MyProject.Domain.Abstractions;
 using MyProject.Domain.Entities;
 using MyProject.Domain.Repositories;
@@ -30,14 +32,17 @@ public sealed class LoginUserCommandHandlerTests
     public async Task Handle_WithValidCredentials_ReturnsTokens()
     {
         var user = User.Create("Nguyen", "Van A", "nguyenvana", "hashedpw", null, null, null);
+        var accessExpiresAt = DateTime.UtcNow.AddDays(1);
+        var refreshExpiresAt = DateTime.UtcNow.AddDays(7);
+        var tokenResponse = new TokenResponse("access-token", "refresh-token", accessExpiresAt, refreshExpiresAt, "Bearer");
 
         _userRepository.GetByUsernameAsync("nguyenvana", Arg.Any<CancellationToken>())
             .Returns(user);
 
         _passwordHasher.Verify("Secret123", "hashedpw").Returns(true);
 
-        _jwtTokenService.GenerateAccessToken(user.Id).Returns("access-token");
-        _jwtTokenService.GenerateRefreshToken().Returns("refresh-token");
+        _jwtTokenService.GenerateToken(user.Id.ToString())
+            .Returns(tokenResponse);
         _jwtTokenService.HashToken("refresh-token").Returns("hashed-refresh-token");
 
         var command = new LoginUserCommand("nguyenvana", "Secret123");
@@ -47,7 +52,7 @@ public sealed class LoginUserCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.AccessToken.Should().Be("access-token");
         result.Value.RefreshToken.Should().Be("refresh-token");
-        result.Value.ExpiresIn.Should().Be(86400);
+        result.Value.AccessTokenExpiresAt.Should().BeCloseTo(accessExpiresAt, TimeSpan.FromSeconds(1));
         result.Value.TokenType.Should().Be("Bearer");
 
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -93,13 +98,14 @@ public sealed class LoginUserCommandHandlerTests
     public async Task Handle_WithValidCredentials_SetsRefreshTokenOnUser()
     {
         var user = User.Create("Nguyen", "Van A", "nguyenvana", "hashedpw", null, null, null);
+        var refreshExpiresAt = DateTime.UtcNow.AddDays(7);
+        var tokenResponse = new TokenResponse("access-token", "refresh-token", DateTime.UtcNow.AddDays(1), refreshExpiresAt, "Bearer");
 
         _userRepository.GetByUsernameAsync("nguyenvana", Arg.Any<CancellationToken>())
             .Returns(user);
 
         _passwordHasher.Verify("Secret123", "hashedpw").Returns(true);
-        _jwtTokenService.GenerateAccessToken(user.Id).Returns("access-token");
-        _jwtTokenService.GenerateRefreshToken().Returns("refresh-token");
+        _jwtTokenService.GenerateToken(user.Id.ToString()).Returns(tokenResponse);
         _jwtTokenService.HashToken("refresh-token").Returns("hashed-refresh-token");
 
         var command = new LoginUserCommand("nguyenvana", "Secret123");
@@ -108,6 +114,6 @@ public sealed class LoginUserCommandHandlerTests
 
         user.HashedRefreshToken.Should().Be("hashed-refresh-token");
         user.RefreshTokenExpiresAt.Should().NotBeNull();
-        user.RefreshTokenExpiresAt!.Value.Should().BeCloseTo(DateTime.UtcNow.AddDays(7), TimeSpan.FromSeconds(5));
+        user.RefreshTokenExpiresAt!.Value.Should().BeCloseTo(refreshExpiresAt, TimeSpan.FromSeconds(5));
     }
 }

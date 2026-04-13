@@ -2,6 +2,7 @@
 using MyProject.Application.Abstractions.Data;
 using MyProject.Application.Abstractions.Messaging;
 using MyProject.Domain.Abstractions;
+using MyProject.Domain.Errors;
 
 namespace MyProject.Application.Features.Auth.GetProfile;
 
@@ -10,8 +11,6 @@ internal sealed class GetProfileQueryHandler(
     IUserContext userContext)
     : IQueryHandler<GetProfileQuery, UserProfileResponse>
 {
-    private static readonly Error UserNotFound =
-        new("User.NotFound", "Người dùng không tồn tại.");
 
     public async Task<Result<UserProfileResponse>> Handle(
         GetProfileQuery request,
@@ -40,6 +39,6 @@ internal sealed class GetProfileQueryHandler(
 
         return profile is not null
             ? profile
-            : Result.Failure<UserProfileResponse>(UserNotFound);
+            : Result.Failure<UserProfileResponse>(UserErrors.NotFound);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Serilog.Context;
+﻿using Microsoft.Extensions.Http;
+using Serilog.Context;
 
 namespace MyProject.API.Extensions;
 
@@ -23,6 +24,13 @@ internal sealed class CorrelationIdMiddleware(RequestDelegate next)
 
 public static class CorrelationIdMiddlewareExtensions
 {
+    public static IServiceCollection AddCorrelationId(this IServiceCollection services)
+    {
+        services.AddTransient<CorrelationIdHandler>();
+        services.AddSingleton<IHttpMessageHandlerBuilderFilter, CorrelationIdHandlerBuilderFilter>();
+        return services;
+    }
+
     public static IApplicationBuilder UseCorrelationId(this IApplicationBuilder app) =>
         app.UseMiddleware<CorrelationIdMiddleware>();
 }

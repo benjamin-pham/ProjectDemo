@@ -14,6 +14,8 @@ public sealed class User : BaseEntity
     public string? HashedRefreshToken { get; set; }
     public DateTime? RefreshTokenExpiresAt { get; set; }
 
+    public ICollection<Role> Roles { get; set; } = [];
+
     public User() { }
 
     public static User Create(
@@ -71,5 +73,16 @@ public sealed class User : BaseEntity
     {
         HashedRefreshToken = null;
         RefreshTokenExpiresAt = null;
+    }
+
+    public void AddRole(Role role)
+    {
+        if (!Roles.Contains(role))
+            Roles.Add(role);
+    }
+
+    public void RemoveRole(Role role)
+    {
+        Roles.Remove(role);
     }
 }

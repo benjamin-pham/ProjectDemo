@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Http;
-using MyProject.API.Endpoints;
+﻿using MyProject.API.Endpoints;
 using MyProject.API.Extensions;
 using MyProject.Application;
 using MyProject.Application.Abstractions.Endpoints;
@@ -18,9 +17,8 @@ builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddAuthenticationSchemes(builder.Configuration);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddCorrelationId();
 builder.Services.AddHealthChecks();
-builder.Services.AddTransient<CorrelationIdHandler>();
-builder.Services.AddSingleton<IHttpMessageHandlerBuilderFilter, CorrelationIdHandlerBuilderFilter>();
 // ── Pipeline ─────────────────────────────────────────────────────────────────
 var app = builder.Build();
 app.MapApiDocsEndpoints();

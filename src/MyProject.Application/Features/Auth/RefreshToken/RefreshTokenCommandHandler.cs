@@ -1,10 +1,10 @@
-﻿using MyProject.Application.Abstractions.Authentication;
+using MyProject.Application.Abstractions.Authentication;
 using MyProject.Application.Abstractions.Messaging;
-using MyProject.Application.Features.Auth.Login;
 using MyProject.Domain.Abstractions;
+using MyProject.Domain.Errors;
 using MyProject.Domain.Repositories;
 using Microsoft.Extensions.Logging;
-using MyProject.Application.Shared.Dtos;
+using MyProject.Application.Features.Auth.Shared;
 
 namespace MyProject.Application.Features.Auth.RefreshToken;
 
@@ -15,8 +15,6 @@ internal sealed class RefreshTokenCommandHandler(
     ILogger<RefreshTokenCommandHandler> logger)
     : ICommandHandler<RefreshTokenCommand, TokenResponse>
 {
-    private static readonly Error InvalidRefreshToken =
-        new("User.InvalidRefreshToken", "Refresh token không hợp lệ hoặc đã hết hạn.");
 
     public async Task<Result<TokenResponse>> Handle(
         RefreshTokenCommand request,
@@ -30,14 +28,13 @@ internal sealed class RefreshTokenCommandHandler(
             || user.RefreshTokenExpiresAt is null
             || user.RefreshTokenExpiresAt <= DateTime.UtcNow)
         {
-            return Result.Failure<TokenResponse>(InvalidRefreshToken);
+            return Result.Failure<TokenResponse>(UserErrors.InvalidRefreshToken);
         }
 
-        var newAccessToken = jwtTokenService.GenerateAccessToken(user.Id);
-        var newRefreshToken = jwtTokenService.GenerateRefreshToken();
-        var newHashedToken = jwtTokenService.HashToken(newRefreshToken);
+        var tokenResponse = jwtTokenService.GenerateToken(user.Id.ToString());
+        var newHashedToken = jwtTokenService.HashToken(tokenResponse.RefreshToken);
 
-        user.SetRefreshToken(newHashedToken, DateTime.UtcNow.AddDays(7));
+        user.SetRefreshToken(newHashedToken, tokenResponse.RefreshTokenExpiresAt);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -46,6 +43,6 @@ internal sealed class RefreshTokenCommandHandler(
             user.Id,
             DateTime.UtcNow);
 
-        return new TokenResponse(newAccessToken, newRefreshToken, 86400, "Bearer");
+        return tokenResponse;
     }
 }
