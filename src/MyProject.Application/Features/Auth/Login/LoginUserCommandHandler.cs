@@ -1,6 +1,7 @@
 using MyProject.Application.Abstractions.Authentication;
 using MyProject.Application.Abstractions.Messaging;
 using MyProject.Domain.Abstractions;
+using MyProject.Domain.Errors;
 using MyProject.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 using MyProject.Application.Features.Auth.Shared;
@@ -15,8 +16,6 @@ internal sealed class LoginUserCommandHandler(
     ILogger<LoginUserCommandHandler> logger)
     : ICommandHandler<LoginUserCommand, TokenResponse>
 {
-    private static readonly Error InvalidCredentials =
-        new("User.InvalidCredentials", "Thông tin đăng nhập không hợp lệ.");
 
     public async Task<Result<TokenResponse>> Handle(
         LoginUserCommand request,
@@ -31,7 +30,7 @@ internal sealed class LoginUserCommandHandler(
                 request.Username,
                 DateTime.UtcNow);
 
-            return Result.Failure<TokenResponse>(InvalidCredentials);
+            return Result.Failure<TokenResponse>(UserErrors.InvalidCredentials);
         }
 
         var tokenResponse = jwtTokenService.GenerateToken(user.Id.ToString());

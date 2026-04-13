@@ -28,4 +28,9 @@ public sealed class RoleRepository(AppDbContext context) : Repository<Role>(cont
         await Context.Roles
             .Where(r => ids.Contains(r.Id) && !r.IsDeleted)
             .ToListAsync(ct);
+
+    public async Task<Role?> GetByIdWithUsersAsync(Guid id, CancellationToken ct = default) =>
+        await Context.Roles
+            .Include(r => r.Users)
+            .SingleOrDefaultAsync(r => r.Id == id && !r.IsDeleted, ct);
 }

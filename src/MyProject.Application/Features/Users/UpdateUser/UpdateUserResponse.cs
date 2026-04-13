@@ -6,4 +6,7 @@ public sealed record UpdateUserResponse(
     string LastName,
     string? Email,
     string? Phone,
-    DateOnly? Birthday);
+    DateOnly? Birthday,
+    IReadOnlyList<UpdatedRoleItem> Roles);
+
+public sealed record UpdatedRoleItem(Guid Id, string Name, string Type);

@@ -8,4 +8,5 @@ public sealed record UpdateUserCommand(
     string LastName,
     string? Email,
     string? Phone,
-    DateOnly? Birthday) : ICommand<UpdateUserResponse>;
+    DateOnly? Birthday,
+    IReadOnlyList<Guid>? RoleIds) : ICommand<UpdateUserResponse>;

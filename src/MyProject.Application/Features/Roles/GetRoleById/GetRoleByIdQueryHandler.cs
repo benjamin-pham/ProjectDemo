@@ -2,14 +2,13 @@ using Dapper;
 using MyProject.Application.Abstractions.Data;
 using MyProject.Application.Abstractions.Messaging;
 using MyProject.Domain.Abstractions;
+using MyProject.Domain.Errors;
 
 namespace MyProject.Application.Features.Roles.GetRoleById;
 
 internal sealed class GetRoleByIdQueryHandler(ISqlConnectionFactory sqlConnectionFactory)
     : IQueryHandler<GetRoleByIdQuery, RoleDetailResponse>
 {
-    private static readonly Error RoleNotFound =
-        new("Role.NotFound", "Vai trò không tồn tại.");
 
     public async Task<Result<RoleDetailResponse>> Handle(
         GetRoleByIdQuery request,
@@ -34,7 +33,7 @@ internal sealed class GetRoleByIdQueryHandler(ISqlConnectionFactory sqlConnectio
         var row = await connection.QuerySingleOrDefaultAsync<RoleRow>(sql, new { request.Id });
 
         if (row is null)
-            return Result.Failure<RoleDetailResponse>(RoleNotFound);
+            return Result.Failure<RoleDetailResponse>(RoleErrors.NotFound);
 
         return new RoleDetailResponse(
             row.Id,

@@ -35,5 +35,9 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
             RuleFor(x => x.Birthday!.Value)
                 .Must(b => b <= DateOnly.FromDateTime(DateTime.UtcNow))
                 .WithMessage("Birthday không được là ngày tương lai."));
+
+        When(x => x.RoleIds is { Count: > 0 }, () =>
+            RuleForEach(x => x.RoleIds)
+                .NotEmpty().WithMessage("RoleId không được là Guid rỗng."));
     }
 }

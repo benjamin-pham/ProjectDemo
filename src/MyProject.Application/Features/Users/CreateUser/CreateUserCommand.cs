@@ -9,4 +9,5 @@ public sealed record CreateUserCommand(
     string Password,
     string? Email,
     string? Phone,
-    DateOnly? Birthday) : ICommand<CreateUserResponse>;
+    DateOnly? Birthday,
+    List<Guid>? RoleIds = null) : ICommand<CreateUserResponse>;

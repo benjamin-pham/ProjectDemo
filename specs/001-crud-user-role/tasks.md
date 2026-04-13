@@ -100,27 +100,27 @@
 ### Slice: GetRoles
 
 - [X] T026 [P] [US2] Implement `GetRoles` slice: `GetRolesQuery.cs` (Page, PageSize), `GetRolesQueryHandler.cs` (Dapper: `COUNT(*) OVER()`, SELECT id/name/description/type/permissions/created_at từ `roles` WHERE `is_deleted = false`), `RolesResponse.cs` (PagedResponse<RoleListItemResponse> với field `permissions text[]`) trong `src/MyProject.Application/Features/Roles/GetRoles/`
-- [ ] T027 [P] [US2] Implement `GetRolesEndpoint.cs`: `GET /api/roles`, query params `page`/`pageSize`, trả về `200 OK PagedResponse<RoleListItemResponse>` trong `src/MyProject.Application/Features/Roles/GetRoles/GetRolesEndpoint.cs`
+- [X] T027 [P] [US2] Implement `GetRolesEndpoint.cs`: `GET /api/roles`, query params `page`/`pageSize`, trả về `200 OK PagedResponse<RoleListItemResponse>` trong `src/MyProject.Application/Features/Roles/GetRoles/GetRolesEndpoint.cs`
 
 ### Slice: GetRoleById
 
-- [ ] T028 [P] [US2] Implement `GetRoleById` slice: `GetRoleByIdQuery.cs` (Guid Id), `GetRoleByIdQueryHandler.cs` (Dapper: SELECT đầy đủ từ `roles`, 404 `Role.NotFound` nếu không tìm thấy), `RoleDetailResponse.cs` (bao gồm `updatedAt`) trong `src/MyProject.Application/Features/Roles/GetRoleById/`
-- [ ] T029 [P] [US2] Implement `GetRoleByIdEndpoint.cs`: `GET /api/roles/{id}`, `200 OK RoleDetailResponse`, `404 Problem` với title `Role.NotFound` trong `src/MyProject.Application/Features/Roles/GetRoleById/GetRoleByIdEndpoint.cs`
+- [X] T028 [P] [US2] Implement `GetRoleById` slice: `GetRoleByIdQuery.cs` (Guid Id), `GetRoleByIdQueryHandler.cs` (Dapper: SELECT đầy đủ từ `roles`, 404 `Role.NotFound` nếu không tìm thấy), `RoleDetailResponse.cs` (bao gồm `updatedAt`) trong `src/MyProject.Application/Features/Roles/GetRoleById/`
+- [X] T029 [P] [US2] Implement `GetRoleByIdEndpoint.cs`: `GET /api/roles/{id}`, `200 OK RoleDetailResponse`, `404 Problem` với title `Role.NotFound` trong `src/MyProject.Application/Features/Roles/GetRoleById/GetRoleByIdEndpoint.cs`
 
 ### Slice: CreateRole
 
-- [ ] T030 [P] [US2] Implement `CreateRole` slice: `CreateRoleCommand.cs` (Name, Description, Type string, Permissions List<string>), `CreateRoleCommandValidator.cs` (NotEmpty/MaxLength cho name/description, Must be "System" hoặc "Dynamic" cho type, NotNull cho permissions), `CreateRoleCommandHandler.cs` (gọi `ExistsByNameAsync` → 409 `Role.NameAlreadyTaken`, gọi `Role.Create(name, description, roleType, permissions)`, `roleRepository.Add(role)`, return response), `CreateRoleResponse.cs` trong `src/MyProject.Application/Features/Roles/CreateRole/`
-- [ ] T031 [P] [US2] Implement `CreateRoleEndpoint.cs`: `POST /api/roles`, `201 Created` với `Location: /api/roles/{id}`, body `CreateRoleResponse`, `400` validation, `409` name trùng trong `src/MyProject.Application/Features/Roles/CreateRole/CreateRoleEndpoint.cs`
+- [X] T030 [P] [US2] Implement `CreateRole` slice: `CreateRoleCommand.cs` (Name, Description, Type string, Permissions List<string>), `CreateRoleCommandValidator.cs` (NotEmpty/MaxLength cho name/description, Must be "System" hoặc "Dynamic" cho type, NotNull cho permissions), `CreateRoleCommandHandler.cs` (gọi `ExistsByNameAsync` → 409 `Role.NameAlreadyTaken`, gọi `Role.Create(name, description, roleType, permissions)`, `roleRepository.Add(role)`, return response), `CreateRoleResponse.cs` trong `src/MyProject.Application/Features/Roles/CreateRole/`
+- [X] T031 [P] [US2] Implement `CreateRoleEndpoint.cs`: `POST /api/roles`, `201 Created` với `Location: /api/roles/{id}`, body `CreateRoleResponse`, `400` validation, `409` name trùng trong `src/MyProject.Application/Features/Roles/CreateRole/CreateRoleEndpoint.cs`
 
 ### Slice: UpdateRole
 
-- [ ] T032 [P] [US2] Implement `UpdateRole` slice: `UpdateRoleCommand.cs` (Guid Id, Name, Description, Type, Permissions), `UpdateRoleCommandValidator.cs` (cùng rules với Create), `UpdateRoleCommandHandler.cs` (load role, 404 nếu không tìm thấy, gọi `ExistsByNameExcludingIdAsync` → 409 nếu tên trùng role khác, gọi `role.Update(...)`, return updated response) trong `src/MyProject.Application/Features/Roles/UpdateRole/`
-- [ ] T033 [P] [US2] Implement `UpdateRoleEndpoint.cs`: `PUT /api/roles/{id}`, `200 OK` với role đã cập nhật, `404 Problem`, `409 Problem` khi tên trùng trong `src/MyProject.Application/Features/Roles/UpdateRole/UpdateRoleEndpoint.cs`
+- [X] T032 [P] [US2] Implement `UpdateRole` slice: `UpdateRoleCommand.cs` (Guid Id, Name, Description, Type, Permissions), `UpdateRoleCommandValidator.cs` (cùng rules với Create), `UpdateRoleCommandHandler.cs` (load role, 404 nếu không tìm thấy, gọi `ExistsByNameExcludingIdAsync` → 409 nếu tên trùng role khác, gọi `role.Update(...)`, return updated response) trong `src/MyProject.Application/Features/Roles/UpdateRole/`
+- [X] T033 [P] [US2] Implement `UpdateRoleEndpoint.cs`: `PUT /api/roles/{id}`, `200 OK` với role đã cập nhật, `404 Problem`, `409 Problem` khi tên trùng trong `src/MyProject.Application/Features/Roles/UpdateRole/UpdateRoleEndpoint.cs`
 
 ### Slice: DeleteRole
 
-- [ ] T034 [P] [US2] Implement `DeleteRole` slice: `DeleteRoleCommand.cs` (Guid Id), `DeleteRoleCommandHandler.cs` (load role với `.Include(r => r.Users)`, 404 nếu không tìm thấy, kiểm tra `role.Users.Any()` → 409 `Role.HasActiveAssignments` nếu có user đang gán, `roleRepository.Delete(role)` — hard delete) trong `src/MyProject.Application/Features/Roles/DeleteRole/`
-- [ ] T035 [P] [US2] Implement `DeleteRoleEndpoint.cs`: `DELETE /api/roles/{id}`, `204 No Content` thành công, `404 Problem`, `409 Problem` với title `Role.HasActiveAssignments` trong `src/MyProject.Application/Features/Roles/DeleteRole/DeleteRoleEndpoint.cs`
+- [X] T034 [P] [US2] Implement `DeleteRole` slice: `DeleteRoleCommand.cs` (Guid Id), `DeleteRoleCommandHandler.cs` (load role với `.Include(r => r.Users)`, 404 nếu không tìm thấy, kiểm tra `role.Users.Any()` → 409 `Role.HasActiveAssignments` nếu có user đang gán, `roleRepository.Delete(role)` — hard delete) trong `src/MyProject.Application/Features/Roles/DeleteRole/`
+- [X] T035 [P] [US2] Implement `DeleteRoleEndpoint.cs`: `DELETE /api/roles/{id}`, `204 No Content` thành công, `404 Problem`, `409 Problem` với title `Role.HasActiveAssignments` trong `src/MyProject.Application/Features/Roles/DeleteRole/DeleteRoleEndpoint.cs`
 
 **Checkpoint**: US1 và US2 phải hoạt động độc lập. Test 10 endpoints User + Role đầy đủ.
 
@@ -134,13 +134,13 @@
 
 ### Slice: AssignRolesToUser
 
-- [ ] T036 [P] [US3] Implement `AssignRolesToUser` slice: `AssignRolesToUserCommand.cs` (Guid UserId, List<Guid> RoleIds), `AssignRolesToUserCommandValidator.cs` (NotEmpty cho RoleIds, mỗi id phải là Guid không rỗng), `AssignRolesToUserCommandHandler.cs` (load User với `.Include(u => u.Roles)` via `GetByIdWithRolesAsync` → 404 `User.NotFound`, batch load roles via `GetByIdsAsync` → 404 `Role.NotFound` nếu có id không tồn tại, gọi `user.AddRole(role)` cho từng role — idempotent, return response với toàn bộ roles hiện tại của user) trong `src/MyProject.Application/Features/Users/AssignRolesToUser/`
-- [ ] T037 [P] [US3] Implement `AssignRolesToUserEndpoint.cs`: `POST /api/users/{id}/roles`, body `{ roleIds: [...] }`, `200 OK` với `{ userId, roles: [...] }`, `404 Problem` (User.NotFound hoặc Role.NotFound), `400 Problem` khi validation fail trong `src/MyProject.Application/Features/Users/AssignRolesToUser/AssignRolesToUserEndpoint.cs`
+- [X] T036 [P] [US3] Implement `AssignRolesToUser` slice: `AssignRolesToUserCommand.cs` (Guid UserId, List<Guid> RoleIds), `AssignRolesToUserCommandValidator.cs` (NotEmpty cho RoleIds, mỗi id phải là Guid không rỗng), `AssignRolesToUserCommandHandler.cs` (load User với `.Include(u => u.Roles)` via `GetByIdWithRolesAsync` → 404 `User.NotFound`, batch load roles via `GetByIdsAsync` → 404 `Role.NotFound` nếu có id không tồn tại, gọi `user.AddRole(role)` cho từng role — idempotent, return response với toàn bộ roles hiện tại của user) trong `src/MyProject.Application/Features/Users/AssignRolesToUser/`
+- [X] T037 [P] [US3] Implement `AssignRolesToUserEndpoint.cs`: `POST /api/users/{id}/roles`, body `{ roleIds: [...] }`, `200 OK` với `{ userId, roles: [...] }`, `404 Problem` (User.NotFound hoặc Role.NotFound), `400 Problem` khi validation fail trong `src/MyProject.Application/Features/Users/AssignRolesToUser/AssignRolesToUserEndpoint.cs`
 
 ### Slice: RemoveRoleFromUser
 
-- [ ] T038 [P] [US3] Implement `RemoveRoleFromUser` slice: `RemoveRoleFromUserCommand.cs` (Guid UserId, Guid RoleId), `RemoveRoleFromUserCommandHandler.cs` (load User với `.Include(u => u.Roles)` via `GetByIdWithRolesAsync` → 404 `User.NotFound`, kiểm tra role có trong `user.Roles` không → 404 `Role.NotAssigned` nếu không có, gọi `user.RemoveRole(role)`) trong `src/MyProject.Application/Features/Users/RemoveRoleFromUser/`
-- [ ] T039 [P] [US3] Implement `RemoveRoleFromUserEndpoint.cs`: `DELETE /api/users/{id}/roles/{roleId}`, `204 No Content` thành công, `404 Problem` với title `User.NotFound` hoặc `Role.NotAssigned` trong `src/MyProject.Application/Features/Users/RemoveRoleFromUser/RemoveRoleFromUserEndpoint.cs`
+- [X] T038 [P] [US3] Implement `RemoveRoleFromUser` slice: `RemoveRoleFromUserCommand.cs` (Guid UserId, Guid RoleId), `RemoveRoleFromUserCommandHandler.cs` (load User với `.Include(u => u.Roles)` via `GetByIdWithRolesAsync` → 404 `User.NotFound`, kiểm tra role có trong `user.Roles` không → 404 `Role.NotAssigned` nếu không có, gọi `user.RemoveRole(role)`) trong `src/MyProject.Application/Features/Users/RemoveRoleFromUser/`
+- [X] T039 [P] [US3] Implement `RemoveRoleFromUserEndpoint.cs`: `DELETE /api/users/{id}/roles/{roleId}`, `204 No Content` thành công, `404 Problem` với title `User.NotFound` hoặc `Role.NotAssigned` trong `src/MyProject.Application/Features/Users/RemoveRoleFromUser/RemoveRoleFromUserEndpoint.cs`
 
 **Checkpoint**: Tất cả 3 User Stories hoạt động đầy đủ. Test assign → verify → remove → verify.
 
@@ -150,8 +150,8 @@
 
 **Mục đích**: Kiểm tra cuối và xác nhận toàn bộ tính năng hoạt động đúng theo spec.
 
-- [ ] T040 [P] Xác nhận toàn bộ project build thành công: `dotnet build src/MyProject.sln` — 0 errors, 0 warnings liên quan đến nullable/unused references
-- [ ] T041 Chạy validation theo quickstart.md: test lần lượt tất cả 12 endpoints (5 User + 5 Role + 2 Assignment) với JWT hợp lệ; xác nhận error codes khớp với contracts (User.NotFound, Role.NotFound, User.UsernameAlreadyTaken, Role.NameAlreadyTaken, Role.HasActiveAssignments, Role.NotAssigned)
+- [X] T040 [P] Xác nhận toàn bộ project build thành công: `dotnet build src/MyProject.sln` — 0 errors, 0 warnings liên quan đến nullable/unused references
+- [X] T041 Chạy validation theo quickstart.md: test lần lượt tất cả 12 endpoints (5 User + 5 Role + 2 Assignment) với JWT hợp lệ; xác nhận error codes khớp với contracts (User.NotFound, Role.NotFound, User.UsernameAlreadyTaken, Role.NameAlreadyTaken, Role.HasActiveAssignments, Role.NotAssigned)
 
 ---
 

@@ -26,5 +26,10 @@ public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCom
             RuleFor(x => x.Birthday!.Value)
                 .Must(b => b <= DateOnly.FromDateTime(DateTime.UtcNow))
                 .WithMessage("Birthday không được là ngày tương lai."));
+
+        When(x => x.RoleIds is not null, () =>
+            RuleFor(x => x.RoleIds!)
+                .Must(ids => ids.Count > 0).WithMessage("RoleIds không được rỗng khi được cung cấp.")
+                .Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("RoleIds không được chứa giá trị trùng lặp."));
     }
 }

@@ -2,14 +2,13 @@ using Dapper;
 using MyProject.Application.Abstractions.Data;
 using MyProject.Application.Abstractions.Messaging;
 using MyProject.Domain.Abstractions;
+using MyProject.Domain.Errors;
 
 namespace MyProject.Application.Features.Users.GetUserById;
 
 internal sealed class GetUserByIdQueryHandler(ISqlConnectionFactory sqlConnectionFactory)
     : IQueryHandler<GetUserByIdQuery, UserDetailResponse>
 {
-    private static readonly Error UserNotFound =
-        new("User.NotFound", "Người dùng không tồn tại.");
 
     public async Task<Result<UserDetailResponse>> Handle(
         GetUserByIdQuery request,
@@ -41,7 +40,7 @@ internal sealed class GetUserByIdQueryHandler(ISqlConnectionFactory sqlConnectio
         var list = rows.ToList();
 
         if (list.Count == 0)
-            return Result.Failure<UserDetailResponse>(UserNotFound);
+            return Result.Failure<UserDetailResponse>(UserErrors.NotFound);
 
         var first = list[0];
         var roles = list

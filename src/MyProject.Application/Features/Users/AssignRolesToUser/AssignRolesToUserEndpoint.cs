@@ -5,27 +5,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using MyProject.Application.Abstractions.Endpoints;
 
-namespace MyProject.Application.Features.Users.UpdateUser;
+namespace MyProject.Application.Features.Users.AssignRolesToUser;
 
-internal sealed class UpdateUserEndpoint : IEndpoint
+internal sealed class AssignRolesToUserEndpoint : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPut("/api/users/{id:guid}", async (
+        app.MapPost("/api/users/{id:guid}/roles", async (
             Guid id,
-            UpdateUserRequest body,
+            AssignRolesToUserRequest body,
             ISender sender,
             CancellationToken ct) =>
         {
-            var command = new UpdateUserCommand(
-                id,
-                body.FirstName,
-                body.LastName,
-                body.Email,
-                body.Phone,
-                body.Birthday,
-                body.RoleIds);
-
+            var command = new AssignRolesToUserCommand(id, body.RoleIds);
             var result = await sender.Send(command, ct);
 
             return result.IsSuccess
@@ -33,24 +25,21 @@ internal sealed class UpdateUserEndpoint : IEndpoint
                 : Results.Problem(
                     title: result.Error.Code,
                     detail: result.Error.Description,
-                    statusCode: result.Error.Code == "User.NotFound"
-                        ? StatusCodes.Status404NotFound
-                        : StatusCodes.Status400BadRequest);
+                    statusCode: result.Error.Code switch
+                    {
+                        "User.NotFound" => StatusCodes.Status404NotFound,
+                        "Role.NotFound" => StatusCodes.Status404NotFound,
+                        _ => StatusCodes.Status400BadRequest
+                    });
         })
         .RequireAuthorization()
-        .WithName("UpdateUser")
+        .WithName("AssignRolesToUser")
         .WithTags("Users")
-        .Produces<UpdateUserResponse>()
+        .Produces<AssignRolesToUserResponse>()
         .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
         .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
         .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
     }
 }
 
-internal sealed record UpdateUserRequest(
-    string FirstName,
-    string LastName,
-    string? Email,
-    string? Phone,
-    DateOnly? Birthday,
-    IReadOnlyList<Guid>? RoleIds);
+public sealed record AssignRolesToUserRequest(List<Guid> RoleIds);

@@ -10,4 +10,5 @@ public interface IRoleRepository : IRepository<Role>
     Task<bool> ExistsByNameAsync(string name, CancellationToken ct = default);
     Task<bool> ExistsByNameExcludingIdAsync(string name, Guid excludeId, CancellationToken ct = default);
     Task<IReadOnlyList<Role>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken ct = default);
+    Task<Role?> GetByIdWithUsersAsync(Guid id, CancellationToken ct = default);
 }

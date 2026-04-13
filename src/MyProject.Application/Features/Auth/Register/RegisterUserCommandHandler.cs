@@ -2,6 +2,7 @@
 using MyProject.Application.Abstractions.Messaging;
 using MyProject.Domain.Abstractions;
 using MyProject.Domain.Entities;
+using MyProject.Domain.Errors;
 using MyProject.Domain.Repositories;
 
 namespace MyProject.Application.Features.Auth.Register;
@@ -11,8 +12,6 @@ internal sealed class RegisterUserCommandHandler(
     IPasswordHasher passwordHasher)
     : ICommandHandler<RegisterUserCommand, RegisterUserResponse>
 {
-    private static readonly Error UsernameAlreadyTaken =
-        new("User.UsernameAlreadyTaken", "Username đã được sử dụng.");
 
     public async Task<Result<RegisterUserResponse>> Handle(
         RegisterUserCommand request,
@@ -20,7 +19,7 @@ internal sealed class RegisterUserCommandHandler(
     {
         var existing = await userRepository.GetByUsernameAsync(request.Username, cancellationToken);
         if (existing is not null)
-            return Result.Failure<RegisterUserResponse>(UsernameAlreadyTaken);
+            return Result.Failure<RegisterUserResponse>(UserErrors.UsernameAlreadyTaken);
 
         var passwordHash = passwordHasher.Hash(request.Password);
 

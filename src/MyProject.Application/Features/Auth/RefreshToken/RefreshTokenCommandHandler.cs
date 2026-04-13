@@ -1,6 +1,7 @@
 using MyProject.Application.Abstractions.Authentication;
 using MyProject.Application.Abstractions.Messaging;
 using MyProject.Domain.Abstractions;
+using MyProject.Domain.Errors;
 using MyProject.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 using MyProject.Application.Features.Auth.Shared;
@@ -14,8 +15,6 @@ internal sealed class RefreshTokenCommandHandler(
     ILogger<RefreshTokenCommandHandler> logger)
     : ICommandHandler<RefreshTokenCommand, TokenResponse>
 {
-    private static readonly Error InvalidRefreshToken =
-        new("User.InvalidRefreshToken", "Refresh token không hợp lệ hoặc đã hết hạn.");
 
     public async Task<Result<TokenResponse>> Handle(
         RefreshTokenCommand request,
@@ -29,7 +28,7 @@ internal sealed class RefreshTokenCommandHandler(
             || user.RefreshTokenExpiresAt is null
             || user.RefreshTokenExpiresAt <= DateTime.UtcNow)
         {
-            return Result.Failure<TokenResponse>(InvalidRefreshToken);
+            return Result.Failure<TokenResponse>(UserErrors.InvalidRefreshToken);
         }
 
         var tokenResponse = jwtTokenService.GenerateToken(user.Id.ToString());
