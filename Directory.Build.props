@@ -5,7 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <DocumentationFile>$(AssemblyName).xml</DocumentationFile>
     <NoWarn>$(NoWarn);1591;1701;1702</NoWarn>
   </PropertyGroup>
 </Project>

@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Roles.CreateRole;
 
 internal sealed class CreateRoleEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/roles", async (

@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Auth.Register;
 
 internal sealed class RegisterEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/auth/register", async (

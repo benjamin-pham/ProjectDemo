@@ -2,10 +2,10 @@
 
 public class LayerDependencyTests
 {
-    private const string DomainNamespace         = "MyProject.Domain";
-    private const string ApplicationNamespace    = "MyProject.Application";
+    private const string DomainNamespace = "MyProject.Domain";
+    private const string ApplicationNamespace = "MyProject.Application";
     private const string InfrastructureNamespace = "MyProject.Infrastructure";
-    private const string ApiNamespace            = "MyProject.API";
+    private const string ApiNamespace = "MyProject.WebHost";
 
     [Fact]
     public void Domain_Should_Not_HaveDependencyOn_Application()

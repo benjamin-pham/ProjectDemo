@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Users.CreateUser;
 
 internal sealed class CreateUserEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/users", async (

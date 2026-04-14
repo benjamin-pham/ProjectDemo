@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Auth.UpdateProfile;
 
 internal sealed class UpdateProfileEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPut("/api/auth/me", async (
@@ -24,6 +26,7 @@ internal sealed class UpdateProfileEndpoint : IEndpoint
                     title: result.Error.Code,
                     detail: result.Error.Description,
                     statusCode: StatusCodes.Status400BadRequest);
+
         })
         .RequireAuthorization()
         .WithName("UpdateProfile")

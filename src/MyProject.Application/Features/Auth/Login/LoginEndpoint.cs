@@ -10,6 +10,8 @@ namespace MyProject.Application.Features.Auth.Login;
 
 internal sealed class LoginEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/auth/login", async (

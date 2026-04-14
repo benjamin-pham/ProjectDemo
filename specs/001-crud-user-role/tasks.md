@@ -50,7 +50,7 @@
 - [X] T012 Cập nhật `RoleRepository.GetByUserIdAsync()`: thay `Context.UserRoles.Any(ur => ur.RoleId == roleId && ur.UserId == userId)` bằng `r.Users.Any(u => u.Id == userId)` — dùng EF query qua nav property mới trong `src/MyProject.Infrastructure/Repositories/RoleRepository.cs`
 - [X] T013 Implement `UserRepository` new methods: `ExistsByUsernameAsync` (EF query `!is_deleted && username == x`) và `GetByIdWithRolesAsync` (EF `.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Id == id && !u.IsDeleted)`) trong `src/MyProject.Infrastructure/Repositories/UserRepository.cs`
 - [X] T014 Implement `RoleRepository` new methods: `ExistsByNameAsync`, `ExistsByNameExcludingIdAsync`, `GetByIdsAsync` (batch load bằng `.Where(r => ids.Contains(r.Id) && !r.IsDeleted).ToListAsync()`) trong `src/MyProject.Infrastructure/Repositories/RoleRepository.cs`
-- [X] T015 Tạo EF migration: chạy `dotnet ef migrations add RefactorRoleImplicitManyToMany --project src/MyProject.Infrastructure --startup-project src/MyProject.API`; kiểm tra file migration được tạo — đảm bảo **không có thay đổi schema vật lý** (bảng `user_roles` giữ nguyên), chỉ cập nhật model snapshot trong `src/MyProject.Infrastructure/Data/Migrations/`
+- [X] T015 Tạo EF migration: chạy `dotnet ef migrations add RefactorRoleImplicitManyToMany --project src/MyProject.Infrastructure --startup-project src/MyProject.WebHost`; kiểm tra file migration được tạo — đảm bảo **không có thay đổi schema vật lý** (bảng `user_roles` giữ nguyên), chỉ cập nhật model snapshot trong `src/MyProject.Infrastructure/Data/Migrations/`
 
 **Checkpoint**: Foundational hoàn tất — project phải build thành công (0 errors). Bắt đầu các User Story.
 

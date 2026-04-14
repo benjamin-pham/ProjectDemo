@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Users.UpdateUser;
 
 internal sealed class UpdateUserEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPut("/api/users/{id:guid}", async (

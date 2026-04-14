@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Roles.GetRoleById;
 
 internal sealed class GetRoleByIdEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/roles/{id:guid}", async (

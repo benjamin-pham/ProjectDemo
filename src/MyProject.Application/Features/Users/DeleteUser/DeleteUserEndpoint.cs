@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Users.DeleteUser;
 
 internal sealed class DeleteUserEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapDelete("/api/users/{id:guid}", async (

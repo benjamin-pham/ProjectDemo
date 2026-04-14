@@ -8,13 +8,16 @@ public abstract class PagedListValidator<TPagedListFilter> : AbstractValidator<T
 {
     protected PagedListValidator()
     {
-        RuleFor(x => x.PageNumber)
-            .NotNull().WithMessage("PageNumber không được để trống.")
-            .GreaterThanOrEqualTo(1).WithMessage("PageNumber phải lớn hơn hoặc bằng 1.");
+        When(x => x.PageNumber is not null, () =>
+            RuleFor(x => x.PageNumber!.Value)
+                .GreaterThanOrEqualTo(1)
+                .WithMessage("PageNumber phải lớn hơn hoặc bằng 1."));
 
-        RuleFor(x => x.PageSize)
-            .NotNull().WithMessage("PageSize không được để trống.")
-            .GreaterThanOrEqualTo(1).WithMessage("PageSize phải lớn hơn hoặc bằng 1.")
-            .LessThanOrEqualTo(100).WithMessage("PageSize phải nhỏ hơn hoặc bằng 100.");
+        When(x => x.PageSize is not null, () =>
+            RuleFor(x => x.PageSize!.Value)
+                .GreaterThanOrEqualTo(1)
+                .WithMessage("PageSize phải lớn hơn hoặc bằng 1.")
+                .LessThanOrEqualTo(100)
+                .WithMessage("PageSize phải nhỏ hơn hoặc bằng 100."));
     }
 }

@@ -10,6 +10,8 @@ namespace MyProject.Application.Features.Auth.RefreshToken;
 
 internal sealed class RefreshTokenEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/auth/refresh-token", async (

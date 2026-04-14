@@ -11,6 +11,8 @@ namespace MyProject.Application.Features.Roles.GetRoles;
 
 internal sealed class GetRolesEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/roles", async (

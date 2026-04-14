@@ -11,6 +11,8 @@ internal sealed class UserContext(IHttpContextAccessor contextAccessor) : IUserC
         contextAccessor
             .HttpContext?.User
             .GetUserId() ?? throw new UnauthorizedAccessException("User context is unavailable");
+
+    public bool IsAuthenticated => contextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 }
 
 internal static class ClaimsPrincipalExtensions

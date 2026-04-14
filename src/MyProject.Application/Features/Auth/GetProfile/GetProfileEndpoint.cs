@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Auth.GetProfile;
 
 internal sealed class GetProfileEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/auth/me", async (
@@ -24,7 +26,7 @@ internal sealed class GetProfileEndpoint : IEndpoint
                     detail: result.Error.Description,
                     statusCode: StatusCodes.Status400BadRequest);
         })
-        .RequireAuthorization()
+        .RequireAuthorization(Permissions)
         .WithName("GetProfile")
         .WithTags("Auth")
         .Produces<UserProfileResponse>()

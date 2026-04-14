@@ -2,23 +2,11 @@ namespace MyProject.Domain.Abstractions;
 
 public record PagedListFilter
 {
-    private const int DefaultPageNumber = 1;
-    private const int DefaultPageSize = 10;
-    private const int MaxPageSize = 100;
+    public const int DefaultPageNumber = 1;
+    public const int DefaultPageSize = 10;
 
-    private int _pageNumber = DefaultPageNumber;
-    private int _pageSize = DefaultPageSize;
-
-    public int? PageNumber
-    {
-        get; set;
-    }
-
-    public int? PageSize
-    {
-        get; set;
-    }
-
+    public int? PageNumber { get; set; } = DefaultPageNumber;
+    public int? PageSize { get; set; } = DefaultPageSize;
     public string? SortBy { get; init; }
     public string? SortDirection { get; init; }
     public string? SearchTerm { get; init; }

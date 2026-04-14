@@ -10,6 +10,8 @@ namespace MyProject.Application.Features.Users.GetUsers;
 
 internal sealed class GetUsersEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/users", async (

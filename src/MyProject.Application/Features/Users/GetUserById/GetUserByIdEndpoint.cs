@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Users.GetUserById;
 
 internal sealed class GetUserByIdEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/users/{id:guid}", async (

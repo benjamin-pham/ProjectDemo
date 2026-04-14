@@ -15,10 +15,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\MyProject.WebHost\MyProject.WebHost.csproj" />
     <ProjectReference Include="..\..\src\MyProject.Domain\MyProject.Domain.csproj" />
     <ProjectReference Include="..\..\src\MyProject.Application\MyProject.Application.csproj" />
     <ProjectReference Include="..\..\src\MyProject.Infrastructure\MyProject.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\MyProject.API\MyProject.API.csproj" />
   </ItemGroup>
 
 </Project>

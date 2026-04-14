@@ -4,8 +4,8 @@
 # Build
 dotnet build
 
-# Run API (target .NET 10)
-dotnet run --project src/MyProject.API/MyProject.API.csproj
+# Run WebHost (target .NET 10)
+dotnet run --project src/MyProject.WebHost/MyProject.WebHost.csproj
 
 # Run all tests
 dotnet test
@@ -21,11 +21,11 @@ This is a modern .NET 10 project using directory-level build props.
 
 # Architecture
 
-Clean Architecture with 4 layers (strict unidirectional dependency: API → Application → Domain; Infrastructure → Domain):
+Clean Architecture with 4 layers (strict unidirectional dependency: WebHost → Application → Domain; Infrastructure → Domain):
 
 ```
         ┌─────────────────────────────────────────────────────┐
-        │                     MyProject.API                   │
+        │                     MyProject.WebHost                   │
         │            (Endpoints, Middleware, DI wiring)       │
         └───────────────┬─────────────────┬───────────────────┘
                         │ depends on      │ registers (DI only)
@@ -80,9 +80,7 @@ src/
 │   │   └── Configurations/    ← OrderConfiguration : IEntityTypeConfiguration<Order>
 │   └── Repositories/          ← OrderRepository : IOrderRepository
 │
-└── {ProjectName}.API/
-    ├── Endpoints/             ← EndpointExtensions ← Auto register endpoint
-    └── Extensions/            ← GlobalExceptionHandler, CorrelationIdMiddleware, SerilogExtensions
+└── {ProjectName}.WebHost/     ← Entrypoint
 ```
 
 # Key Patterns
@@ -115,7 +113,7 @@ src/
 | `Domain.UnitTests` | Entity logic | xunit, FluentAssertions |
 | `Application.UnitTests` | Handlers, validators, behaviors | + NSubstitute |
 | `Infrastructure.IntegrationTests` | Repositories, EF Core config | + Testcontainers (PostgreSQL), Respawn |
-| `API.IntegrationTests` | End-to-end HTTP | + WebApplicationFactory, Testcontainers, Respawn |
+| `WebHost.IntegrationTests` | End-to-end HTTP | + WebApplicationFactory, Testcontainers, Respawn |
 | `ArchitectureTests` | Layer dependency enforcement | NetArchTest.Rules |
 
 Integration tests spin up a real PostgreSQL container via Testcontainers. Respawn resets data between tests.

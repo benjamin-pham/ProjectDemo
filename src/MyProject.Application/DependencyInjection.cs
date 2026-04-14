@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using FluentValidation;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using MyProject.Application.Behaviors;
 // using MyProject.Domain.Attributes;
@@ -8,9 +9,9 @@ namespace MyProject.Application;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static WebApplicationBuilder AddApplicationServices(this WebApplicationBuilder builder)
     {
-        services.AddMediatR(config =>
+        builder.Services.AddMediatR(config =>
         {
             config.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
             config.AddOpenBehavior(typeof(LoggingBehavior<,>));
@@ -19,8 +20,8 @@ public static class DependencyInjection
             config.AddOpenBehavior(typeof(TransactionBehavior<,>));
         });
 
-        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        return services;
+        return builder;
     }
 }

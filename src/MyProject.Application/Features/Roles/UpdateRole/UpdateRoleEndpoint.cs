@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Roles.UpdateRole;
 
 internal sealed class UpdateRoleEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPut("/api/roles/{id:guid}", async (

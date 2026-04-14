@@ -9,6 +9,8 @@ namespace MyProject.Application.Features.Roles.DeleteRole;
 
 internal sealed class DeleteRoleEndpoint : IEndpoint
 {
+    public string[] Permissions => [];
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapDelete("/api/roles/{id:guid}", async (

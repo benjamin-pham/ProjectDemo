@@ -93,7 +93,7 @@ src/
 │       ├── UserRepository.cs           # Thêm GetPagedAsync()
 │       └── RoleRepository.cs          # Thêm GetPagedAsync(), cập nhật GetByUserIdAsync()
 │
-└── MyProject.API/ (không thay đổi cấu trúc — endpoints tự đăng ký qua IEndpoint)
+└── MyProject.WebHost/ (không thay đổi cấu trúc — endpoints tự đăng ký qua IEndpoint)
 ```
 
 **Structure Decision**: Option 3 — Clean Architecture với vertical slice (feature-first) trong Application layer. Cấu trúc này đang được áp dụng trong project (xem `Features/Auth/`). Tính năng mới đặt trong `Features/Users/` và `Features/Roles/`.
