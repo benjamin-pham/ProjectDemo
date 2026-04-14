@@ -11,7 +11,7 @@ public sealed class UserRepository(AppDbContext context) : Repository<User>(cont
         await Context.Users
             .FirstOrDefaultAsync(u => u.Username == username, ct);
 
-    public new async Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
+    public override async Task<User?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         await Context.Users
             .FirstOrDefaultAsync(u => u.Id == id, ct);
 

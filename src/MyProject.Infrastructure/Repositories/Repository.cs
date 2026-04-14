@@ -10,22 +10,22 @@ public abstract class Repository<T, TKey>(AppDbContext context) : IRepository<T,
 {
     protected readonly AppDbContext Context = context;
 
-    public async Task<T?> GetByIdAsync(TKey id, CancellationToken ct = default) =>
+    public virtual async Task<T?> GetByIdAsync(TKey id, CancellationToken ct = default) =>
         await Context.Set<T>().FindAsync([id!], ct);
 
-    public async Task<IReadOnlyList<T>> GetAllAsync(CancellationToken ct = default) =>
+    public virtual async Task<IReadOnlyList<T>> GetAllAsync(CancellationToken ct = default) =>
         await Context.Set<T>().ToListAsync(ct);
 
-    public async Task AddAsync(T entity, CancellationToken ct = default) =>
+    public virtual async Task AddAsync(T entity, CancellationToken ct = default) =>
         await Context.Set<T>().AddAsync(entity, ct);
 
-    public void Update(T entity) =>
+    public virtual void Update(T entity) =>
         Context.Set<T>().Update(entity);
 
-    public void Remove(T entity) =>
+    public virtual void Remove(T entity) =>
         Context.Set<T>().Remove(entity);
 
-    public void Add(T entity) =>
+    public virtual void Add(T entity) =>
         Context.Set<T>().Add(entity);
 }
 
