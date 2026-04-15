@@ -17,7 +17,7 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
 
         RuleFor(x => x.Username)
             .NotEmpty().WithMessage("Username không được để trống.")
-            .MaximumLength(50).WithMessage("Username không được vượt quá 50 ký tự.");
+            .SetValidator(new UsernameValidator());
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password không được để trống.")
@@ -29,7 +29,7 @@ public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCom
 
         When(x => x.Phone is not null, () =>
             RuleFor(x => x.Phone!)
-                .MaximumLength(20).WithMessage("Phone không được vượt quá 20 ký tự."));
+                .SetValidator(new PhoneValidator()));
 
         When(x => x.Birthday.HasValue, () =>
             RuleFor(x => x.Birthday!.Value)

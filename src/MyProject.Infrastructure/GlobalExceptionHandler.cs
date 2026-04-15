@@ -52,10 +52,16 @@ public sealed class GlobalExceptionHandler(
                 Title: "Unauthorized",
                 Detail: unauthorizedAccessException.Message,
                 Errors: null),
+            TimeoutException timeoutException => new ExceptionDetails(
+                Status: StatusCodes.Status408RequestTimeout,
+                Type: "https://tools.ietf.org/html/rfc7231#section-6.5.7",
+                Title: "RequestTimeout",
+                Detail: timeoutException.Message,
+                Errors: null),
             _ => new ExceptionDetails(
                 Status: StatusCodes.Status500InternalServerError,
                 Type: "https://tools.ietf.org/html/rfc7231#section-6.6.1",
-                Title: "ServerError",
+                Title: "InternalServerError",
                 Detail: "An unexpected error has occurred",
                 Errors: null)
         };

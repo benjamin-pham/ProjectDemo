@@ -1,4 +1,5 @@
 using FluentValidation;
+using MyProject.Application.Shared.RuleValidator;
 
 namespace MyProject.Application.Features.Users.UpdateUser;
 
@@ -20,7 +21,7 @@ public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCom
 
         When(x => x.Phone is not null, () =>
             RuleFor(x => x.Phone!)
-                .MaximumLength(20).WithMessage("Phone không được vượt quá 20 ký tự."));
+                .SetValidator(new PhoneValidator()));
 
         When(x => x.Birthday.HasValue, () =>
             RuleFor(x => x.Birthday!.Value)

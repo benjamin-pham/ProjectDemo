@@ -1,7 +1,7 @@
 ```mermaid
 graph TD
     WebHost["<b>WebHost</b><br/>(MyProject.WebHost)<br/>Endpoints, Middleware"]
-    APP["<b>Application</b><br/>(MyProject.Application)<br/>Commands, Queries, Handlers, Validators"]
+    APP["<b>Application</b><br/>(MyProject.Application)<br/>Commands, Queries, Handlers, Validators, Endpoints"]
     INF["<b>Infrastructure</b><br/>(MyProject.Infrastructure)<br/>EF Core, Repositories, DbContext"]
     DOM["<b>Domain</b><br/>(MyProject.Domain)<br/>Entities, Abstractions, Enums"]
 

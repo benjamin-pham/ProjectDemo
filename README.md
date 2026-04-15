@@ -5,13 +5,13 @@
 dotnet build
 
 # Run WebHost (target .NET 10)
-dotnet run --project src/MyProject.WebHost/MyProject.WebHost.csproj
+dotnet run --project src/{ProjectName}.WebHost/{ProjectName}.WebHost.csproj
 
 # Run all tests
 dotnet test
 
 # Run a single test project
-dotnet test tests/MyProject.Application.UnitTests/
+dotnet test tests/{ProjectName}.Application.UnitTests/
 
 # Run a specific test
 dotnet test --filter "FullyQualifiedName~SomeTestName"
@@ -23,26 +23,23 @@ This is a modern .NET 10 project using directory-level build props.
 
 Clean Architecture with 4 layers (strict unidirectional dependency: WebHost → Application → Domain; Infrastructure → Domain):
 
-```
-        ┌─────────────────────────────────────────────────────┐
-        │                     MyProject.WebHost                   │
-        │            (Endpoints, Middleware, DI wiring)       │
-        └───────────────┬─────────────────┬───────────────────┘
-                        │ depends on      │ registers (DI only)
-                        ▼                 ▼
-        ┌─────────────────────────┐  ┌─────────────────────────────┐
-        │  MyProject.Application  │  │   MyProject.Infrastructure  │
-        │ (Commands, Queries,     │  │  (EF Core, Repositories,    │
-        │  Handlers,Validators)   │  │   DbContext)                │
-        └───────────┬─────────────┘  └───────────────┬─────────────┘
-                    │ depends on                     │ depends on
-                    ▼                                ▼
-            ┌──────────────────────────────────────────────┐
-            │                MyProject.Domain              │
-            │    (Entities, Abstractions, Enums, Result)   │
-            └──────────────────────────────────────────────┘
-```
+```mermaid
+graph TD
+    WebHost["<b>WebHost</b><br/>({ProjectName}.WebHost)<br/>Entrypoint"]
+    APP["<b>Application</b><br/>({ProjectName}.Application)<br/>Commands, Queries, Handlers, Validators, Endpoints"]
+    INF["<b>Infrastructure</b><br/>({ProjectName}.Infrastructure)<br/>EF Core, Repositories, DbContext"]
+    DOM["<b>Domain</b><br/>({ProjectName}.Domain)<br/>Entities, Abstractions, Enums"]
 
+    WebHost -->|depends on| APP
+    WebHost -->|registers| INF
+    APP -->|depends on| DOM
+    INF -->|depends on| DOM
+
+    style DOM fill:#4CAF50,color:#fff,stroke:#388E3C
+    style APP fill:#2196F3,color:#fff,stroke:#1565C0
+    style INF fill:#FF9800,color:#fff,stroke:#E65100
+    style WebHost fill:#9C27B0,color:#fff,stroke:#6A1B9A
+```
 
 ```
 src/
@@ -85,9 +82,9 @@ src/
 
 # Key Patterns
 
-**Endpoint registration** — Implement `IEndpoint` (defined in `src/MyProject.Application/Abstractions/Endpoints/IEndpoint.cs`), place the endpoint file **co-located with its Command/Query** in `src/MyProject.Application/Features/{Feature}/{OperationName}/`. `EndpointExtensions` scans the assembly at startup and registers all `IEndpoint` implementations automatically — no manual wiring needed.
+**Endpoint registration** — Implement `IEndpoint` (defined in `src/{ProjectName}.Application/Abstractions/Endpoints/IEndpoint.cs`), place the endpoint file **co-located with its Command/Query** in `src/{ProjectName}.Application/Features/{Feature}/{OperationName}/`. `EndpointExtensions` scans the assembly at startup and registers all `IEndpoint` implementations automatically — no manual wiring needed.
 
-**Commands/Queries** — Each operation lives in its own folder `src/MyProject.Application/Features/{Feature}/{OperationName}/` and contains:
+**Commands/Queries** — Each operation lives in its own folder `src/{ProjectName}.Application/Features/{Feature}/{OperationName}/` and contains:
 
 | File | Required | Notes |
 |---|---|---|
@@ -100,11 +97,11 @@ src/
 
 **Result pattern** — Domain errors use `Result<T>` (not exceptions). Use `Result.Success(value)` / `Result.Failure(error)` and check `result.IsFailure` in handlers or endpoints.
 
-**Pagination** — When an operation needs paging, let the query inherit `PagedListFilter` from `src/MyProject.Domain/Abstractions/PagedListFilter.cs` so it carries `PageNumber`, `PageSize`, `SortBy`, `SortDirection`, and `SearchTerm`. The corresponding query validator should inherit `PagedListValidator<TQuery>` from `src/MyProject.Application/Shared/RuleValidator/PagedListValidator.cs` to validate `PageNumber` and `PageSize`. Return `PagedList<T>` from `src/MyProject.Domain/Abstractions/PagedList.cs` so responses consistently include `Items`, `PageNumber`, `PageSize`, `TotalItems`, `TotalPages`, `HasNextPage`, and `HasPreviousPage`. For paginated read queries, use Dapper `QueryMultipleAsync` to fetch both the page items and total count in a single database round-trip.
+**Pagination** — When an operation needs paging, let the query inherit `PagedListFilter` from `src/{ProjectName}.Domain/Abstractions/PagedListFilter.cs` so it carries `PageNumber`, `PageSize`, `SortBy`, `SortDirection`, and `SearchTerm`. The corresponding query validator should inherit `PagedListValidator<TQuery>` from `src/{ProjectName}.Application/Shared/RuleValidator/PagedListValidator.cs` to validate `PageNumber` and `PageSize`. Return `PagedList<T>` from `src/{ProjectName}.Domain/Abstractions/PagedList.cs` so responses consistently include `Items`, `PageNumber`, `PageSize`, `TotalItems`, `TotalPages`, `HasNextPage`, and `HasPreviousPage`. For paginated read queries, use Dapper `QueryMultipleAsync` to fetch both the page items and total count in a single database round-trip.
 
 **Audit trail** — All entities extending `BaseEntity` automatically get `CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy` set by `AppDbContext.SaveChangesAsync`. `IsDeleted` enables soft deletes.
 
-**EF Core config** — Entity configurations go in `src/MyProject.Infrastructure/Data/Configurations/` using Fluent API with snake_case naming convention.
+**EF Core config** — Entity configurations go in `src/{ProjectName}.Infrastructure/Data/Configurations/` using Fluent API with snake_case naming convention.
 
 # Testing
 
@@ -112,8 +109,8 @@ src/
 |---|---|---|
 | `Domain.UnitTests` | Entity logic | xunit, FluentAssertions |
 | `Application.UnitTests` | Handlers, validators, behaviors | + NSubstitute |
+| `Application.IntegrationTests` | End-to-end HTTP | + WebApplicationFactory, Testcontainers, Respawn |
 | `Infrastructure.IntegrationTests` | Repositories, EF Core config | + Testcontainers (PostgreSQL), Respawn |
-| `WebHost.IntegrationTests` | End-to-end HTTP | + WebApplicationFactory, Testcontainers, Respawn |
 | `ArchitectureTests` | Layer dependency enforcement | NetArchTest.Rules |
 
 Integration tests spin up a real PostgreSQL container via Testcontainers. Respawn resets data between tests.

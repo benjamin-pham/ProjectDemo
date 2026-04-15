@@ -1,6 +1,6 @@
 namespace MyProject.Domain.Abstractions;
 
-public class PagedList<TItem>
+public sealed class PagedList<TItem>
 {
     public PagedList(List<TItem> items, int pageNumber, int pageSize, int totalCount)
     {

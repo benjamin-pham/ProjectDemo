@@ -29,9 +29,9 @@ public sealed class RegisterUserCommandValidator : AbstractValidator<RegisterUse
 
         When(x => x.Phone is not null, () =>
             RuleFor(x => x.Phone!)
-                .Matches(@"^[0-9+]{7,15}$").WithMessage("Phone phải từ 7–15 ký tự, chỉ chứa số và dấu +."));
+                .SetValidator(new PhoneValidator()));
 
-        When(x => x.Birthday.HasValue, () =>
+        When(x => x.Birthday is not null, () =>
             RuleFor(x => x.Birthday!.Value)
                 .Must(b => b <= DateOnly.FromDateTime(DateTime.UtcNow))
                 .WithMessage("Birthday không được là ngày tương lai."));

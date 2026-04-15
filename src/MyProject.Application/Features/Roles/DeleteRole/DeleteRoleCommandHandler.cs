@@ -10,7 +10,6 @@ internal sealed class DeleteRoleCommandHandler(
     IUnitOfWork unitOfWork)
     : ICommandHandler<DeleteRoleCommand>
 {
-
     public async Task<Result> Handle(
         DeleteRoleCommand request,
         CancellationToken cancellationToken)
