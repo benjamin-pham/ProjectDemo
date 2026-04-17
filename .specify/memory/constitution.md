@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 SYNC IMPACT REPORT
 ==================
 Version change: [TEMPLATE] → 1.0.0 (initial ratification from blank template)
@@ -26,7 +26,7 @@ Follow-up TODOs:
   - None. All fields resolved from project context.
 -->
 
-# MyProject Constitution
+# ProjectTemplate Constitution
 
 ## Core Principles
 

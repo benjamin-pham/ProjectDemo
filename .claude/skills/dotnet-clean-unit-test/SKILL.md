@@ -40,7 +40,7 @@ Infrastructure tests (EF Core, database) and API tests (WebApplicationFactory, H
 
 ### Step 1 — Detect Project Structure
 
-Identify `{ProjectName}` from the source project file names under `src/` (e.g., `src/MyProject.Domain/` → `MyProject`). This project has no solution file — it uses `Directory.Build.props` for directory-level build configuration. Scan existing layers:
+Identify `{ProjectName}` from the source project file names under `src/` (e.g., `src/{ProjectName}.Domain/` → `{ProjectName}`). This project has no solution file — it uses `Directory.Build.props` for directory-level build configuration. Scan existing layers:
 
 ```
 src/{ProjectName}.Domain/          → tests/{ProjectName}.Domain.UnitTests/

@@ -10,5 +10,12 @@
         ".specify/scripts/bash/": true,
         ".specify/scripts/powershell/": true
     },
-    "inlineSql.validation.dialect": "auto"
+    "dapperSqlColorizer.colors.keywords": "#569CD6",
+    "dapperSqlColorizer.colors.identifiers": "#D4D4D4",
+    "dapperSqlColorizer.colors.parameters": "#9CDCFE",
+    "dapperSqlColorizer.colors.functions": "#DCDCAA",
+    "dapperSqlColorizer.colors.strings": "#CE9178",
+    "dapperSqlColorizer.colors.numbers": "#B5CEA8",
+    "dapperSqlColorizer.colors.booleans": "#569CD6",
+    "dapperSqlColorizer.keywords.bold": true
 }

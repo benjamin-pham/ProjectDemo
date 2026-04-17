@@ -23,7 +23,7 @@ Xây dựng bộ CRUD API đầy đủ cho hai thực thể `User` và `Role` th
 
 *GATE: Phải pass trước Phase 0. Re-check sau Phase 1 design.*
 
-Xác minh dựa trên MyProject Constitution v1.0.0:
+Xác minh dựa trên ProjectTemplate Constitution v1.0.0:
 
 - [x] **I. Clean Architecture** — Tất cả Commands/Queries nằm trong `Application`; EF Core chỉ trong `Infrastructure`; endpoints trong `Application/Features/**/*Endpoint.cs` chỉ gọi `ISender.Send()`. Luồng phụ thuộc đúng hướng: `API → Application → Domain`, `Infrastructure → Application → Domain`.
 - [x] **II. Rich Domain Model** — `User` đã có `static Create(...)` factory và `UpdateProfile(...)` method. `Role` cần bổ sung `static Create(...)` factory (đã xác nhận trong clarification). State mutation cho gán/gỡ role thực hiện qua `User.AddRole(role)` / `User.RemoveRole(role)`.
@@ -53,7 +53,7 @@ specs/001-crud-user-role/
 
 ```text
 src/
-├── MyProject.Domain/
+├── ProjectTemplate.Domain/
 │   ├── Entities/
 │   │   ├── User.cs                      # Thêm AddRole(), RemoveRole()
 │   │   └── Role.cs                      # Thêm Create() factory, đổi UserRoles → Users nav
@@ -63,7 +63,7 @@ src/
 │   └── Enumerations/
 │       └── RoleType.cs                  # Không đổi
 │
-├── MyProject.Application/
+├── ProjectTemplate.Application/
 │   └── Features/
 │       ├── Users/
 │       │   ├── GetUsers/                # Query + Handler + Endpoint (Dapper)
@@ -80,7 +80,7 @@ src/
 │           ├── UpdateRole/              # Command + Handler + Validator + Endpoint
 │           └── DeleteRole/             # Command + Handler + Endpoint
 │
-├── MyProject.Infrastructure/
+├── ProjectTemplate.Infrastructure/
 │   ├── Data/
 │   │   ├── Configurations/
 │   │   │   ├── UserConfiguration.cs    # Cập nhật HasMany().WithMany() implicit
@@ -93,7 +93,7 @@ src/
 │       ├── UserRepository.cs           # Thêm GetPagedAsync()
 │       └── RoleRepository.cs          # Thêm GetPagedAsync(), cập nhật GetByUserIdAsync()
 │
-└── MyProject.WebHost/ (không thay đổi cấu trúc — endpoints tự đăng ký qua IEndpoint)
+└── ProjectTemplate.WebHost/ (không thay đổi cấu trúc — endpoints tự đăng ký qua IEndpoint)
 ```
 
 **Structure Decision**: Option 3 — Clean Architecture với vertical slice (feature-first) trong Application layer. Cấu trúc này đang được áp dụng trong project (xem `Features/Auth/`). Tính năng mới đặt trong `Features/Users/` và `Features/Roles/`.

@@ -6,7 +6,7 @@
 **Nhánh tính năng**: `001-crud-user-role`
 **Ngày tạo**: 2026-04-11
 **Trạng thái**: Bản nháp
-**Đầu vào**: Mô tả người dùng: "xây dựng api crud @src/MyProject.Domain/Entities/User.cs và @src/MyProject.Domain/Entities/Role.cs"
+**Đầu vào**: Mô tả người dùng: "xây dựng api crud @src/ProjectTemplate.Domain/Entities/User.cs và @src/ProjectTemplate.Domain/Entities/Role.cs"
 
 ## User Scenarios & Testing *(mandatory)*
 

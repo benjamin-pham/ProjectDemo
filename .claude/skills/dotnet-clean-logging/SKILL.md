@@ -190,7 +190,7 @@ For **cross-cutting trace logging** (enter/exit/error on methods), the project p
 Apply to a method, property, or constructor:
 
 ```csharp
-using MyProject.Domain.Attributes;
+using {ProjectName}.Domain.Attributes;
 
 [TraceLog]
 public async Task DoSomething(int a, int b)

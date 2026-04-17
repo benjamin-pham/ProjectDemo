@@ -9,7 +9,7 @@ Hướng dẫn nhanh để hiểu cách implement tính năng này, tập trung 
 ## Điểm khởi đầu
 
 Tính năng này mở rộng trên nền tảng đã có:
-- Auth feature (`src/MyProject.Application/Features/Auth/`) là template mẫu
+- Auth feature (`src/ProjectTemplate.Application/Features/Auth/`) là template mẫu
 - Pattern: `Command/Query → Handler → Endpoint` trong cùng một folder
 
 ---
@@ -29,10 +29,10 @@ Tính năng này mở rộng trên nền tảng đã có:
 
 3. Xóa các file liên quan đến explicit `UserRole` entity:
    ```
-   src/MyProject.Domain/Entities/UserRole.cs
-   src/MyProject.Domain/Repositories/IUserRoleRepository.cs
-   src/MyProject.Infrastructure/Data/Configurations/UserRoleConfiguration.cs
-   src/MyProject.Infrastructure/Repositories/UserRoleRepository.cs
+   src/ProjectTemplate.Domain/Entities/UserRole.cs
+   src/ProjectTemplate.Domain/Repositories/IUserRoleRepository.cs
+   src/ProjectTemplate.Infrastructure/Data/Configurations/UserRoleConfiguration.cs
+   src/ProjectTemplate.Infrastructure/Repositories/UserRoleRepository.cs
    ```
 
 4. Cập nhật `UserConfiguration.cs` — cấu hình implicit many-to-many giữ tên bảng `user_roles`
@@ -61,7 +61,7 @@ Task<IReadOnlyList<Role>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken
 
 ### Bước 3 — Features/Users (5 slices)
 
-Mỗi slice nằm trong `src/MyProject.Application/Features/Users/{FeatureName}/`:
+Mỗi slice nằm trong `src/ProjectTemplate.Application/Features/Users/{FeatureName}/`:
 
 | Slice | Files |
 |-------|-------|
@@ -80,7 +80,7 @@ Mỗi slice nằm trong `src/MyProject.Application/Features/Users/{FeatureName}/
 
 ### Bước 5 — Features/Roles (5 slices)
 
-Tương tự Users, trong `src/MyProject.Application/Features/Roles/{FeatureName}/`.
+Tương tự Users, trong `src/ProjectTemplate.Application/Features/Roles/{FeatureName}/`.
 
 ### Bước 6 — Infrastructure (Implementation)
 

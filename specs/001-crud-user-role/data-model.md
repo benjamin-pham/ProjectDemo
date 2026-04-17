@@ -6,7 +6,7 @@
 
 ## Thực thể hiện có và thay đổi cần thiết
 
-### 1. `User` — `src/MyProject.Domain/Entities/User.cs`
+### 1. `User` — `src/ProjectTemplate.Domain/Entities/User.cs`
 
 **Trạng thái**: Tồn tại, cần bổ sung domain methods cho gán/gỡ Role.
 
@@ -58,7 +58,7 @@ public void RemoveRole(Role role)
 
 ---
 
-### 2. `Role` — `src/MyProject.Domain/Entities/Role.cs`
+### 2. `Role` — `src/ProjectTemplate.Domain/Entities/Role.cs`
 
 **Trạng thái**: Tồn tại — cần bổ sung `Create()` factory, đổi `UserRoles` → `Users` navigation, thêm `Update()` method.
 
@@ -92,19 +92,19 @@ public void Update(string name, string description, RoleType type, List<string> 
 
 ---
 
-### 3. `UserRole` — `src/MyProject.Domain/Entities/UserRole.cs`
+### 3. `UserRole` — `src/ProjectTemplate.Domain/Entities/UserRole.cs`
 
 **Trạng thái**: **Xóa** — thay thế bởi EF Core implicit many-to-many.
 
 Sau refactor, EF Core tự quản lý bảng `user_roles` qua implicit mapping. Các file cần xóa:
-- `src/MyProject.Domain/Entities/UserRole.cs`
-- `src/MyProject.Domain/Repositories/IUserRoleRepository.cs`
-- `src/MyProject.Infrastructure/Data/Configurations/UserRoleConfiguration.cs`
-- `src/MyProject.Infrastructure/Repositories/UserRoleRepository.cs`
+- `src/ProjectTemplate.Domain/Entities/UserRole.cs`
+- `src/ProjectTemplate.Domain/Repositories/IUserRoleRepository.cs`
+- `src/ProjectTemplate.Infrastructure/Data/Configurations/UserRoleConfiguration.cs`
+- `src/ProjectTemplate.Infrastructure/Repositories/UserRoleRepository.cs`
 
 ---
 
-### 4. `RoleType` — `src/MyProject.Domain/Enumerations/RoleType.cs`
+### 4. `RoleType` — `src/ProjectTemplate.Domain/Enumerations/RoleType.cs`
 
 **Trạng thái**: Không thay đổi.
 

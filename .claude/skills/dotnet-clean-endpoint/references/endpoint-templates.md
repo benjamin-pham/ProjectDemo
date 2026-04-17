@@ -50,7 +50,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using MyProject.Application.Abstractions.Endpoints;
+using {ProjectName}.Application.Abstractions.Endpoints;
 
 namespace {ProjectName}.Application.Features.Products.GetAllProducts;
 
@@ -82,7 +82,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using MyProject.Application.Abstractions.Endpoints;
+using {ProjectName}.Application.Abstractions.Endpoints;
 
 namespace {ProjectName}.Application.Features.Products.GetProductById;
 
@@ -114,7 +114,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using MyProject.Application.Abstractions.Endpoints;
+using {ProjectName}.Application.Abstractions.Endpoints;
 
 namespace {ProjectName}.Application.Features.Products.CreateProduct;
 
@@ -146,7 +146,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using MyProject.Application.Abstractions.Endpoints;
+using {ProjectName}.Application.Abstractions.Endpoints;
 
 namespace {ProjectName}.Application.Features.Products.UpdateProduct;
 
@@ -180,7 +180,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using MyProject.Application.Abstractions.Endpoints;
+using {ProjectName}.Application.Abstractions.Endpoints;
 
 namespace {ProjectName}.Application.Features.Products.DeleteProduct;
 
